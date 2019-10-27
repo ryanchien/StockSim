@@ -112,7 +112,7 @@ class SignUpForm(UserCreationForm):
         model = User
         fields = settings.SIGN_UP_FIELDS
 
-    email = forms.EmailField(label=_('Email'), help_text=_('Required. Enter an existing email address.'))
+    #email = forms.EmailField(label=_('Email'), help_text=_('Required. Enter an existing email address.'))
 
     def clean_email(self):
         email = self.cleaned_data['email']

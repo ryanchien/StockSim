@@ -110,25 +110,13 @@ class SignUpView(GuestOnlyView, FormView):
             user.username = f'user_{user.id}'
             user.save()
 
-        if settings.ENABLE_USER_ACTIVATION:
-            code = get_random_string(20)
+        
+        raw_password = form.cleaned_data['password1']
 
-            act = Activation()
-            act.code = code
-            act.user = user
-            act.save()
+        user = authenticate(username=user.username, password=raw_password)
+        login(request, user)
 
-            send_activation_email(request, user.email, code)
-
-            messages.success(
-                request, _('You are signed up. To activate the account, follow the link sent to the mail.'))
-        else:
-            raw_password = form.cleaned_data['password1']
-
-            user = authenticate(username=user.username, password=raw_password)
-            login(request, user)
-
-            messages.success(request, _('You are successfully signed up!'))
+        messages.success(request, _('You are successfully signed up!'))
 
         return redirect('index')
 
