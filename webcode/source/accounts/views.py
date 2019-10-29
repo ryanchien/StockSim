@@ -24,8 +24,7 @@ from .utils import (
 )
 from .forms import (
     SignInViaUsernameForm, SignInViaEmailForm, SignInViaEmailOrUsernameForm, SignUpForm,
-    RestorePasswordForm, RestorePasswordViaEmailOrUsernameForm, RemindUsernameForm,
-    ResendActivationCodeForm, ResendActivationCodeViaEmailForm, ChangeProfileForm, ChangeEmailForm,
+    RestorePasswordForm, RestorePasswordViaEmailOrUsernameForm, RemindUsernameForm, ChangeProfileForm, ChangeEmailForm,
 )
 from .models import Activation
 
@@ -99,9 +98,6 @@ class SignUpView(GuestOnlyView, FormView):
         else:
             user.username = form.cleaned_data['username']
 
-        if settings.ENABLE_USER_ACTIVATION:
-            user.is_active = False
-
         # Create a user record
         user.save()
 
@@ -137,36 +133,6 @@ class ActivateView(View):
         messages.success(request, _('You have successfully activated your account!'))
 
         return redirect('accounts:log_in')
-
-
-class ResendActivationCodeView(GuestOnlyView, FormView):
-    template_name = 'accounts/resend_activation_code.html'
-
-    @staticmethod
-    def get_form_class(**kwargs):
-        if settings.DISABLE_USERNAME:
-            return ResendActivationCodeViaEmailForm
-
-        return ResendActivationCodeForm
-
-    def form_valid(self, form):
-        user = form.user_cache
-
-        activation = user.activation_set.first()
-        activation.delete()
-
-        code = get_random_string(20)
-
-        act = Activation()
-        act.code = code
-        act.user = user
-        act.save()
-
-        send_activation_email(self.request, user.email, code)
-
-        messages.success(self.request, _('A new activation code has been sent to your email address.'))
-
-        return redirect('accounts:resend_activation_code')
 
 
 class RestorePasswordView(GuestOnlyView, FormView):
@@ -229,23 +195,10 @@ class ChangeEmailView(LoginRequiredMixin, FormView):
         user = self.request.user
         email = form.cleaned_data['email']
 
-        if settings.ENABLE_ACTIVATION_AFTER_EMAIL_CHANGE:
-            code = get_random_string(20)
+        user.email = email
+        user.save()
 
-            act = Activation()
-            act.code = code
-            act.user = user
-            act.email = email
-            act.save()
-
-            send_activation_change_email(self.request, email, code)
-
-            messages.success(self.request, _('To complete the change of email address, click on the link sent to it.'))
-        else:
-            user.email = email
-            user.save()
-
-            messages.success(self.request, _('Email successfully changed.'))
+        messages.success(self.request, _('Email successfully changed.'))
 
         return redirect('accounts:change_email')
 
