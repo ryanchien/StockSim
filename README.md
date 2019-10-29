@@ -30,3 +30,7 @@ How to put data into webpage html template:
 About using SQL in Django:
  - Django has a very easy way to query/alter db with what are called "models." It would be nice to use this method of interacting with the db, but we have to make raw SQL statements for this project. See https://docs.djangoproject.com/en/2.2/topics/db/sql/
  - We are currently using the sqlite3 library to interact with the sqlite db instead of django's built in db library. If we ever need to switch to a different database (sqlite3 is one of the more limited db systems), its easy to change django's provided db to another db system, so we might as well just start using django's built in db library at that point.
+
+Instructions to set up and run:
+1) Install redis on computer (brew install redis)
+2) TODO: Will need to run a SQL/python script to instantiate db schema with tables and triggers
