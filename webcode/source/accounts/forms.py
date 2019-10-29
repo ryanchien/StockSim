@@ -202,3 +202,21 @@ class RemindUsernameForm(UserCacheMixin, forms.Form):
         self.user_cache = user
 
         return email
+
+class StocksForm(forms.Form):
+    stocks = forms.CharField(max_length=500)
+
+    def get_data(self):
+        result = {}
+        par = {'symbol':'SNAP', 'api_token':'svaMvA7fFajd6B3EBsfrLZL6lCfmqLl6vJgCbGPBisqN74QPzH3kF49JDqR4'}
+        response = requests.get(url = 'https://api.worldtradingdata.com/api/v1/stock', params = par)
+        if response.status_code == 200:
+            result = response.json()
+            result['success'] = True
+        else:
+            result['success'] = False
+            if response.status_code == 404:
+                result['message'] = "NOT FOUND"
+            else:
+                result['message'] = "WORLDTRADINGDATA API IS NOT AVAILABLE AT THE MOMENT. PLEASE TRY AGAIN LATER."
+        return result

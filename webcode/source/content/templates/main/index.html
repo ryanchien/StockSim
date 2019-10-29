@@ -1,16 +1,9 @@
-{% extends 'layouts/default/page.html' %}
+{% extends 'layouts/default/page.html' %} {% load i18n %} {% block content %} {% if request.user.is_authenticated %} {% trans 'Your username is' %} <b>{{ request.user.username }}</b>. {% else %} {% trans 'You are a guest.' %} {% endif %}
 
-{% load i18n %}
+<h2> WORLD TRADING DATA
+    <h2>
+        <p> Stock Data for <strong>{{symbol}}</strong>: </p>
 
-{% block content %}
-
-    {% if request.user.is_authenticated %}
-
-        {% trans 'Your username is' %} <b>{{ request.user.username }}</b>.
-
-    {% else %}
-
-        {% trans 'You are a guest.' %}
         <!-- TradingView Widget BEGIN -->
 <!-- TradingView Widget BEGIN -->
 <div class="tradingview-widget-container">
@@ -159,3 +152,4 @@
     <!-- TradingView Widget BEGIN -->
 
 {% endblock %}
+
