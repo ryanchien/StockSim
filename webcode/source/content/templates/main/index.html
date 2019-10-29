@@ -14,4 +14,15 @@
 
     {% endif %}
 
+    <!--{% if stocks_result %} -->
+    	{% if stocks_result.success %}
+    		<h2> WORLD TRADING DATA <h2>
+    		{% for stock in stocks_result.data%}
+    			<p> Stock Data for <strong>{{stock.symbol}}</strong>: {stock} </p>
+    		{% endfor %}
+    	{% endif %}
+    <!--{% else %}
+    	<h2> BROKEN <h2>
+    {% endif %}-->
+
 {% endblock %}
