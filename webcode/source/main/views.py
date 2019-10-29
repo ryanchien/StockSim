@@ -1,5 +1,6 @@
 from django.views.generic import TemplateView
 from django.shortcuts import render
+import accounts.forms
 import requests
 
 class IndexPageView(TemplateView):
@@ -9,7 +10,7 @@ class IndexPageView(TemplateView):
 		context = super().get_context_data(**kwargs)
 		context['symbol'] = 'APPL'
 		return context
-	
+
 
 class ChangeLanguageView(TemplateView):
-	template_name = 'main/change_language.html'
+    template_name = 'main/change_language.html'

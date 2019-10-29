@@ -4,4 +4,31 @@
     <h2>
         <p> Stock Data for <strong>{{symbol}}</strong>: </p>
 
+<<<<<<< HEAD
         {% endblock %}
+=======
+{% block content %}
+
+    {% if request.user.is_authenticated %}
+
+        {% trans 'Your username is' %} <b>{{ request.user.username }}</b>.
+
+    {% else %}
+
+        {% trans 'You are a guest.' %}
+
+    {% endif %}
+
+    {% if stocks_result %}
+    	{% if stocks_result.success %}
+    		<h2> WORLD TRADING DATA <h2>
+    		{% for stock in stocks_result.data%}
+    			<p> Stock Data for <strong>{{stock.symbol}}</strong>: {stock} </p>
+    		{% endfor %}
+    	{% endif %}
+    {% else %}
+    	<h2> BROKEN <h2>
+    {% endif %}
+
+{% endblock %}
+>>>>>>> 537a0e8ce8e6f1610007aa2e4e9bbcecb831b31c
