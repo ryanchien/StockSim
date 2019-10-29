@@ -19,7 +19,8 @@ TODO list:
 
 Notes:
 How to put data into webpage html template:
-https://stackoverflow.com/questions/36950416/when-to-use-get-get-queryset-get-context-data-in-django
+    - https://stackoverflow.com/questions/36950416/when-to-use-get-get-queryset-get-context-data-in-django
+    - https://stackoverflow.com/questions/51631651/why-use-get-context-data-self-kwargs-and-super
 
 About using SQL in Django:
 Django has a very easy way to query/alter db with what are called "models." It would be nice to use this method of interacting with the db, but we have to make raw SQL statements for this project. See https://docs.djangoproject.com/en/2.2/topics/db/sql/
