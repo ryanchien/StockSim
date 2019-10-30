@@ -248,6 +248,7 @@ class ChangePasswordView(BasePasswordChangeView):
 
         return redirect('accounts:change_password')
 
+
 class RestorePasswordConfirmView(BasePasswordResetConfirmView):
     template_name = 'accounts/restore_password_confirm.html'
 

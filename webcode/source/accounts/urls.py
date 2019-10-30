@@ -3,7 +3,7 @@ from django.urls import path
 from .views import (
     LogInView, RemindUsernameView, SignUpView, ActivateView, LogOutView,
     ChangeEmailView, ChangeEmailActivateView, ChangeProfileView, ChangePasswordView,
-    RestorePasswordView, RestorePasswordDoneView, RestorePasswordConfirmView
+    RestorePasswordView, RestorePasswordDoneView, RestorePasswordConfirmView,
 )
 
 app_name = 'accounts'
