@@ -1,11 +1,25 @@
 {% extends 'layouts/default/page.html' %} {% load i18n %} {% block content %} {% if request.user.is_authenticated %} {% trans 'Your username is' %} <b>{{ request.user.username }}</b>. {% else %} {% trans 'You are a guest.' %} {% endif %}
 
 <h2> WORLD TRADING DATA <h2>
-    <p> Stock Data for <strong>{{symbol}}</strong>: </p>
+    <p> Stock Data for <strong>{{symbol}}</strong>: {{price}} {{volume}} </p>
     <form method="get">
       {{ form.as_p }}
+      {% if symbol == "" %}
       <button type="submit">search</button>
+      {% else %}
+      <button type="submit">buy</button>
+      <button type="submit">sell</button>
+      {% endif %}
     </form>
+    <p> Volume : {{volume}} </p>
+<!--
+    {% if symbol != "" %}
+      <input method = "get" type="save" name="BuyField" value="0">
+      <input method = "get" type="submit" name="BuyButton" value="Buy">
+      <input method = "get" type="save" name="SellField" value="0">
+      <input method = "get" type="submit" name="SellButton" value="Sell">
+    {% endif %}
+-->
 
         <!-- TradingView Widget BEGIN -->
 <!-- TradingView Widget BEGIN -->
@@ -34,8 +48,7 @@
         "title": "Indices",
         "symbols": [
           {
-            "s": "NASDAQ:{{symbol}}",
-            "d": "S&P 500"
+            "s": "NASDAQ:{{symbol}}"
           },
           {
             "s": "OANDA:NAS100USD",

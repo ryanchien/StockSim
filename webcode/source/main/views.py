@@ -16,28 +16,39 @@ import requests
 from django.urls import reverse
 
 from django.views.generic import View, FormView
-from .forms import StocksForm
+from .forms import StocksForm, BuySellForm
 from django.shortcuts import get_object_or_404, redirect
 
 class IndexPageView(TemplateView, FormView):
 	template_name = 'main/index.html'
 
-	@staticmethod
-	def get_form_class(**kwargs):
-		return StocksForm
+
+	#@staticmethod
+	def get_form_class(self):
+		if self.request.get_full_path() == '/':
+			return StocksForm
+		else:
+			return BuySellForm
 
 	def form_valid(self, form):
 		request = self.request
-		return redirect('index', symbol=form.cleaned_data['stockdata'])
+		if isinstance(form, StocksForm):
+			return redirect('index', symbol=form.cleaned_data['stockdata'])
+		elif isinstance(form, BuySellForm):
+			return redirect('index', symbol=self.request.get_full_path(), volume=form.cleaned_data['buysellvolume'])
+		return redirect('index')
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
 
 		if self.request.get_full_path() == '/':
 			context['symbol'] = ''
-		else:
+		elif '?stockdata=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
 			url = self.request.get_full_path()
 			context['symbol'] = url.split('?stockdata=')[1]
+		elif '?stockdata=' in self.request.get_full_path() and '?buysellvolume=' in self.request.get_full_path():
+			url = self.request.get_full_path()
+			context['volume'] = url.split('?buysellvolume=')[1]
 		return context
 
 '''
