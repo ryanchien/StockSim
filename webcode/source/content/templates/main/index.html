@@ -1,15 +1,11 @@
 {% extends 'layouts/default/page.html' %} {% load i18n %} {% block content %} {% if request.user.is_authenticated %} {% trans 'Your username is' %} <b>{{ request.user.username }}</b>. {% else %} {% trans 'You are a guest.' %} {% endif %}
 
-<h2> WORLD TRADING DATA <h2>
-    <p> Stock Data for <strong>{{symbol}}</strong>: </p>
-    <form method="get">
-      {{ form.as_p }}
-      <button type="submit">search</button>
-    </form>
+<h2> WORLD TRADING DATA
+    <h2>
+        <p> Stock Data for <strong>{{symbol}}</strong>: </p>
 
         <!-- TradingView Widget BEGIN -->
 <!-- TradingView Widget BEGIN -->
-
 <div class="tradingview-widget-container">
     <div class="tradingview-widget-container__widget"></div>
     <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
@@ -34,7 +30,7 @@
         "title": "Indices",
         "symbols": [
           {
-            "s": "NASDAQ:{{symbol}}",
+            "s": "OANDA:SPX500USD",
             "d": "S&P 500"
           },
           {
@@ -150,6 +146,8 @@
   </div>
   <!-- TradingView Widget END -->
   <!-- TradingView Widget END -->
+
+    {% endif %}
 
     <!-- TradingView Widget BEGIN -->
 
