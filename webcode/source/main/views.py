@@ -16,30 +16,56 @@ import requests
 from django.urls import reverse
 
 from django.views.generic import View, FormView
-from .forms import StocksForm
+from .forms import StocksForm, BuySellForm
 from django.shortcuts import get_object_or_404, redirect
+
+#last_symbol = ""
 
 class IndexPageView(TemplateView, FormView):
 	template_name = 'main/index.html'
 
-	@staticmethod
-	def get_form_class(**kwargs):
-		return StocksForm
 
-	def form_valid(self, form):
-		request = self.request
-		return redirect('index', symbol=form.cleaned_data['stockdata'])
+	#@staticmethod
+	
+	def get_form_class(self):
+		url = self.request.get_full_path()
+		if url == '/':
+			return StocksForm
+		else:	
+			return BuySellForm
+
 
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
 
+		
 		if self.request.get_full_path() == '/':
 			context['symbol'] = ''
-		else:
+		elif '?stockdata=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
 			url = self.request.get_full_path()
 			context['symbol'] = url.split('?stockdata=')[1]
+			#last_symbol = url.split('?stockdata=')[1]
+		elif '&stockdata=' in self.request.get_full_path() and '?buysellvolume=' in self.request.get_full_path():
+			url = self.request.get_full_path()
+			temp = url.split('?buysellvolume=')
+			context['symbol'] =  url.split('&stockdata=')[1]
+			context['volume'] = (temp[1])[: temp[1].find('&')]
 		return context
 
+'''
+	def form_valid(self, form):
+		print("okokokok")
+		request = self.request
+		if isinstance(form, StocksForm):
+			print("symbol")
+			return redirect('symbol', symbol=form.cleaned_data['stockdata'])
+		elif isinstance(form, BuySellForm):
+			print("volume")
+			return redirect('volume', symbol=self.request.get_full_path(), volume=form.cleaned_data['buysellvolume'])
+		print("doing")
+		return redirect('index')
+'''
+	
 '''
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
@@ -53,7 +79,6 @@ class IndexPageView(TemplateView, FormView):
 			context['symbol'] = record['TickerSymbol']
 		else:
 			context['symbol'] = 'Does not exist'
-
 		return context
 '''
 
