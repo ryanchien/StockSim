@@ -1,7 +1,7 @@
 {% extends 'layouts/default/page.html' %} {% load i18n %} {% block content %} {% if request.user.is_authenticated %} {% trans 'Your username is' %} <b>{{ request.user.username }}</b>. {% else %} {% trans 'You are a guest.' %} {% endif %}
 
 <h2> WORLD TRADING DATA <h2>
-    <p> Stock Data for <strong>{{symbol}}</strong> </p>
+    <p> Stock Data for <strong>{{symbol}}{{stocks}}</strong> </p>
     <form method="get" id=1>
       {{ form.as_p  }}
       {% if symbol == "" %}
@@ -47,29 +47,16 @@
       {
         "title": "Indices",
         "symbols": [
+        {% for stock in stocks %}
           {
-            "s": "NASDAQ:{{symbol}}"
+            "s": "NASDAQ:{{stock}}"
           },
+        {% endfor %}
           {
             "s": "OANDA:NAS100USD",
             "d": "Nasdaq 100"
-          },
-          {
-            "s": "FOREXCOM:DJI",
-            "d": "Dow 30"
-          },
-          {
-            "s": "INDEX:NKY",
-            "d": "Nikkei 225"
-          },
-          {
-            "s": "INDEX:DEU30",
-            "d": "DAX Index"
-          },
-          {
-            "s": "OANDA:UK100GBP",
-            "d": "FTSE 100"
           }
+          
         ],
         "originalTitle": "Indices"
       },

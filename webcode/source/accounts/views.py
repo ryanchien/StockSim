@@ -198,6 +198,7 @@ class ChangeEmailView(LoginRequiredMixin, FormView):
         user.email = email
         user.save()
 
+
         messages.success(self.request, _('Email successfully changed.'))
 
         return redirect('accounts:change_email')
