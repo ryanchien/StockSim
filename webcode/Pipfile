@@ -7,3 +7,6 @@ name = "pypi"
 Django = "==2.2.4"
 "django-bootstrap4" = "==0.0.8"
 sqlite3 = "*"
+
+[dev-packages]
+autopep8 = "*"
