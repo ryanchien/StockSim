@@ -41,3 +41,40 @@ CREATE TABLE TradingHistory (
     Quantity        INT,
     PRIMARY KEY TransactionID
 );
+
+
+-- GET WALLET FOR A PARTICULAR USER
+
+SELECT * FROM portfolio WHERE user = my_user;
+
+
+-- ADD NEW ROW WHEN BUY
+INSERT INTO portfolio
+VALUES (username, stock, quantity, usd)
+
+UPDATE portfolio
+SET USD = new_usd
+WHERE username=the_user
+
+-- UPDATE ROW WHEN ALREADY HAVE THIS STOCK
+UPDATE portfolio
+SET quantity = prevQuant + newQuant
+WHERE username=the_user AND stock = boughtstock
+
+-- AGGREGATE TO MAP TOTAL QUANTITY OF STOCKS PER USER
+SELECT username, SUM(quantity) as totalQ
+FROM portfolio
+GROUP BY username
+
+
+
+
+
+
+
+
+
+
+
+
+
