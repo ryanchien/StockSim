@@ -15,7 +15,7 @@ if __name__ == "__main__":
 		curr_symbol_batch = []
 		for i, line in enumerate(file):
 			# split symbol list into lists of size 5 for API request
-			if (i % 5 == 0) and i != 0:
+			if (i % 5 == 0) and i != 0 and i != 100:
 				symbol_batches.append(curr_symbol_batch)
 				curr_symbol_batch = []
 
