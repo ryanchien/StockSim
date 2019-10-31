@@ -39,7 +39,9 @@ class IndexPageView(TemplateView, FormView):
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
 		url = self.request.get_full_path()
-		user = user.request.username
+		# user = user.request.username
+		# For now enter the username manually. This will be different for everyone
+		user = 'thebob'
 		
 		if self.request.get_full_path() == '/':
 			context['symbol'] = ''
@@ -50,10 +52,11 @@ class IndexPageView(TemplateView, FormView):
 			#last_symbol = url.split('?stockdata=')[1]
 		elif '&stockdata=' in self.request.get_full_path() and '?buysellvolume=' in self.request.get_full_path():
 			temp = url.split('?buysellvolume=')
-			quantity = (temp[1])[: temp[1].find('&')]
+			quantity = int((temp[1])[: temp[1].find('&')])
 			temp = (url.split('&stockdata='))[1]
 			print(temp)
 			symbol = temp[ : temp.find('&')]
+			
 			# get price of stock
 			sql1 = 'SELECT Value FROM Stocks WHERE TickerSymbol=?'
 			args1 = (symbol,)
@@ -68,7 +71,7 @@ class IndexPageView(TemplateView, FormView):
 			if record2:
 				current_USD_in_wallet = record2['Quantity']
 
-
+			# get user's current stock quantity
 			sql3 = 'SELECT Quantity FROM Portfolios WHERE Username=? AND Symbol=?'
 			args3 = (user, symbol)
 			record3 = common.db_helper.db_query(sql3, args3)
@@ -80,6 +83,7 @@ class IndexPageView(TemplateView, FormView):
 
 			order_cost = quantity * price
 
+			# Begin applying order to user's portfolio...
 			if quantity > 0:
 				# buy order
 				if current_USD_in_wallet >= order_cost:
@@ -98,7 +102,7 @@ class IndexPageView(TemplateView, FormView):
 					# Update with decreased USD quantity
 					sql5 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
 					updated_USD_quantity = current_USD_in_wallet - order_cost
-					args5 = (updated_USD_quantity, user, symbol)
+					args5 = (updated_USD_quantity, user, "USD")
 					common.db_helper.db_execute(sql5, args5)
 			elif quantity < 0:
 				# sell order
@@ -112,21 +116,21 @@ class IndexPageView(TemplateView, FormView):
 					sql7 = 'DELETE FROM Portfolios WHERE Username=? AND Symbol=?'
 					args7 = (user, symbol)
 					common.db_helper.db_execute(sql7, args7)
-
 				else:
-					# Since quantity is negative for sell orders, we will add quantity
+					updated_USD_quantity = current_USD_in_wallet - order_cost
 
-					# Update with decreased stock quantity
-					sql4 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
-					updated_stock_quantity = current_stock_in_wallet + quantity
-					args4 = (updated_stock_quantity, user, symbol)
-					common.db_helper.db_execute(sql4, args4)
+				# Since quantity is currently just negative for sell orders, we will add quantity
 
-					# Update with increased USD quantity
-					sql5 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
-					updated_USD_quantity = current_USD_in_wallet + order_cost
-					args5 = (updated_USD_quantity, user, symbol)
-					common.db_helper.db_execute(sql5, args5)
+				# Update with decreased stock quantity
+				sql4 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
+				updated_stock_quantity = current_stock_in_wallet + quantity
+				args4 = (updated_stock_quantity, user, symbol)
+				common.db_helper.db_execute(sql4, args4)
+
+				# Update with increased USD quantity
+				sql5 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
+				args5 = (updated_USD_quantity, user, "USD")
+				common.db_helper.db_execute(sql5, args5)
 
 			url = self.request.get_full_path()
 			temp = url.split('?buysellvolume=')
