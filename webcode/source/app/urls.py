@@ -1,3 +1,4 @@
+
 from django.contrib import admin
 from django.conf import settings
 from django.urls import path, include
@@ -9,6 +10,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('', IndexPageView.as_view(), name='index'),
+
+    path('<symbol>/', IndexPageView.as_view(), name='symbol'),
+    path('<symbol>/<volume>', IndexPageView.as_view(), name='volume'),
 
     path('i18n/', include('django.conf.urls.i18n')),
     path('language/', ChangeLanguageView.as_view(), name='change_language'),
