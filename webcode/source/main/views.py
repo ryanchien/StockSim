@@ -43,14 +43,18 @@ class IndexPageView(TemplateView, FormView):
 			context['symbol'] = ''
 		elif '?stockdata=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
 			url = self.request.get_full_path()
-			context['symbol'] = url.split('?stockdata=')[1]
+			temp = (url.split('?stockdata=')[1])
+			context['symbol'] = temp
 			#last_symbol = url.split('?stockdata=')[1]
 		elif '&stockdata=' in self.request.get_full_path() and '?buysellvolume=' in self.request.get_full_path():
 			url = self.request.get_full_path()
 			temp = url.split('?buysellvolume=')
-			context['symbol'] =  url.split('&stockdata=')[1]
 			context['volume'] = (temp[1])[: temp[1].find('&')]
+			temp = (url.split('&stockdata='))[1]
+			print(temp)
+			context['symbol'] = temp[ : temp.find('&')]
 		return context
+
 
 '''
 	def form_valid(self, form):

@@ -7,8 +7,8 @@
       {% if symbol == "" %}
       <button type="submit">search</button>
       {% else %}
-      <button type="submit">buy</button>
-      <button type="submit">sell</button>
+      <button type="submit" name ="buy">buy</button>
+      <button type="submit" name = "sell">sell</button>
       {% endif %}
     </form>
     <p> Volume : {{volume}} </p>
@@ -162,7 +162,7 @@
     </script>
   </div>
   {% else %}
-  {% endif %}
+  
   <!-- TradingView Widget END -->
   <!-- TradingView Widget END -->
 
@@ -191,6 +191,7 @@
   );
   </script>
 </div>
+{% endif %}
 <!-- TradingView Widget END -->
 
 {% endblock %}
