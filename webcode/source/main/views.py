@@ -71,7 +71,7 @@ class IndexPageView(TemplateView, FormView):
 			sql1 = 'SELECT Value FROM Stocks WHERE TickerSymbol=?'
 			args1 = (symbol,)
 			record1 = common.db_helper.db_query(sql1, args1)
-			price = record1['Value']
+			price = record1[0]['Value']
 
 			# get user's current USD
 			sql2 = 'SELECT Quantity FROM Portfolios WHERE Username=? AND Symbol=?'
@@ -79,14 +79,14 @@ class IndexPageView(TemplateView, FormView):
 			record2 = common.db_helper.db_query(sql2, args2)
 			current_USD_in_wallet = 0
 			if record2:
-				current_USD_in_wallet = record2['Quantity']
+				current_USD_in_wallet = record2[0]['Quantity']
 
 			# get user's current stock quantity
 			sql3 = 'SELECT Quantity FROM Portfolios WHERE Username=? AND Symbol=?'
 			args3 = (user, symbol)
 			record3 = common.db_helper.db_query(sql3, args3)
 			if record3:
-				current_stock_in_wallet = record3['Quantity']
+				current_stock_in_wallet = record3[0]['Quantity']
 			else:
 				# This means no record of user + stock exists. Create new entry later if valid
 				current_stock_in_wallet = 0
