@@ -1,7 +1,6 @@
 {% extends 'layouts/default/page.html' %} {% load i18n %} {% block content %} {% if request.user.is_authenticated %} {% trans 'Your username is' %} <b>{{ request.user.username }}</b>. {% else %} {% trans 'You are a guest.' %} {% endif %}
 
 <h2> WORLD TRADING DATA <h2>
-    <p> Stock Data for <strong>{{symbol}}{{stocks}}</strong> </p>
     <form method="get" id=1>
       {{ form.as_p  }}
       {% if symbol == "" %}
@@ -11,7 +10,6 @@
       <button type="submit" name = "sell">sell</button>
       {% endif %}
     </form>
-    <p> Volume : {{volume}} </p>
 <!--
     {% if symbol != "" %}
       <input method = "get" type="save" name="BuyField" value="0">
