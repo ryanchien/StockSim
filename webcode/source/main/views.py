@@ -43,15 +43,16 @@ class IndexPageView(TemplateView, FormView):
 		# For now enter the username manually. This will be different for everyone
 		user = self.request.user.username
 		print(user)
-		sqlstocks = 'SELECT Symbol FROM Portfolios WHERE Username=? '
+		sqlstocks = 'SELECT * FROM Portfolios WHERE Symbol="AAPL"; '
 		argsstocks = (user,)
-		recordstocks = common.db_helper.db_query(sqlstocks, (user,))
-		#print("userstocks:")
-		#print(recordstocks['Symbol'])
-		
+		recordstocks = common.db_helper.db_query(sqlstocks)
+		print("userstocks:")
+		for elem in recordstocks:
+			print(elem)
+	
 		if self.request.get_full_path() == '/':
 			context['symbol'] = ''
-			context['stocks'] = ['AMZN', 'AAPL', 'GOOG']#QUERY HERE
+			context['stocks'] = recordstocks#QUERY HERE
 		elif '?stockdata=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
 			temp = (url.split('?stockdata=')[1])
 			context['symbol'] = temp
@@ -60,8 +61,8 @@ class IndexPageView(TemplateView, FormView):
 			temp = url.split('?buysellvolume=')
 			quantity = int((temp[1])[: temp[1].find('&')])
 			temp = (url.split('&stockdata='))[1]
-			print(temp)
 			symbol = temp[ : temp.find('&')]
+			#print(symbol)
 			
 			# get price of stock
 			sql1 = 'SELECT Value FROM Stocks WHERE TickerSymbol=?'
@@ -142,7 +143,7 @@ class IndexPageView(TemplateView, FormView):
 			temp = url.split('?buysellvolume=')
 			context['volume'] = (temp[1])[: temp[1].find('&')]
 			temp = (url.split('&stockdata='))[1]
-			print(temp)
+			#print(temp)
 			context['symbol'] = temp[ : temp.find('&')]
 		return context
 
