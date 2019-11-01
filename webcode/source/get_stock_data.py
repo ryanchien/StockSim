@@ -30,7 +30,7 @@ if __name__ == "__main__":
 	# Second, make API requests to get all data on each symbol and insert into database
 	my_api_token = 'SDkzDidRK2esOGFgvME99XA3L5W52dMSnNFYHHpO2V775gKFI4GwZ6w0vdha'
 
-	conn = sqlite3.connect('db.sqlite3')
+	conn = sqlite3.connect('../db.sqlite3')
 	cursor = conn.cursor()
 
 	wtd = WorldTradingData(my_api_token)
