@@ -104,8 +104,9 @@ class SignUpView(GuestOnlyView, FormView):
 
         user.save()
 
-        sqlcall = ' INSERT into Portfolios VALUES (?, “USD”, 10000);'
-        common.db_helper.db_query(sqlcall, (user.username,))
+        sqlcall = 'INSERT INTO Portfolios VALUES (?,?,?)'
+        args = (user.username, "USD", 10000)
+        common.db_helper.db_execute(sqlcall, args)
 
         # Change the username to the "user_ID" form
         if settings.DISABLE_USERNAME:
