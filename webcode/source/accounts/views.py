@@ -100,6 +100,9 @@ class SignUpView(GuestOnlyView, FormView):
 
         # Create a user record
         user.save()
+        sql = 'INSERT INTO Portfolios VALUES (?,"USD",10000)'
+        args = (user.username,)
+        record = common.db_helper.db_query(sql, args)
 
         # Change the username to the "user_ID" form
         if settings.DISABLE_USERNAME:
