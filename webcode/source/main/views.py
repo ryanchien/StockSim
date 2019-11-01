@@ -42,8 +42,10 @@ class IndexPageView(TemplateView, FormView):
 		# user = user.request.username
 		# For now enter the username manually. This will be different for everyone
 		user = self.request.user.username
-		print(user)
-		sqlstocks = 'SELECT * FROM Portfolios WHERE Symbol="AAPL"; '
+
+
+		sqlstocks = 'SELECT Symbol FROM Portfolios WHERE Username=? '
+
 		argsstocks = (user,)
 		recordstocks = common.db_helper.db_query(sqlstocks)
 		print("userstocks:")
@@ -91,7 +93,7 @@ class IndexPageView(TemplateView, FormView):
 			order_cost = quantity * price
 
 			# Begin applying order to user's portfolio...
-			if quantity > 0:
+			if self.request.get_full_path().split("&")[2] == 'buy=':
 				# buy order
 				if current_USD_in_wallet >= order_cost:
 					if current_stock_in_wallet == 0:
@@ -111,7 +113,8 @@ class IndexPageView(TemplateView, FormView):
 					updated_USD_quantity = current_USD_in_wallet - order_cost
 					args5 = (updated_USD_quantity, user, "USD")
 					common.db_helper.db_execute(sql5, args5)
-			elif quantity < 0:
+			elif self.request.get_full_path().split("&")[2] == 'sell=':
+				quantity *= -1
 				# sell order
 				if current_stock_in_wallet <= abs(quantity):
 					# If user asks to sell more than he has, sell only his remaining stock.
@@ -124,7 +127,7 @@ class IndexPageView(TemplateView, FormView):
 					args7 = (user, symbol)
 					common.db_helper.db_execute(sql7, args7)
 				else:
-					updated_USD_quantity = current_USD_in_wallet - order_cost
+					updated_USD_quantity = current_USD_in_wallet + order_cost
 
 				# Since quantity is currently just negative for sell orders, we will add quantity
 

@@ -103,6 +103,7 @@ class SignUpView(GuestOnlyView, FormView):
         # Create a user record
 
         user.save()
+
         sqlcall = ' INSERT into Portfolios VALUES (?, “USD”, 10000);'
         common.db_helper.db_query(sqlcall, (user.username,))
 
