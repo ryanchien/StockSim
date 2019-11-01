@@ -42,19 +42,20 @@ class IndexPageView(TemplateView, FormView):
 		# user = user.request.username
 		# For now enter the username manually. This will be different for everyone
 		user = self.request.user.username
-
-
-		sqlstocks = 'SELECT Symbol FROM Portfolios WHERE Username=? '
-
+		print(user)
+		sqlstocks = 'SELECT * FROM Portfolios WHERE Symbol <> "USD"; '
 		argsstocks = (user,)
 		recordstocks = common.db_helper.db_query(sqlstocks)
+		print(type(recordstocks))
 		print("userstocks:")
+		txt = ""
+		userstocks = []
 		for elem in recordstocks:
-			print(elem)
-	
+			userstocks.append(elem['Symbol'])
+
 		if self.request.get_full_path() == '/':
 			context['symbol'] = ''
-			context['stocks'] = recordstocks#QUERY HERE
+			context['stocks'] = userstocks#QUERY HERE
 		elif '?stockdata=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
 			temp = (url.split('?stockdata=')[1])
 			context['symbol'] = temp
@@ -70,7 +71,7 @@ class IndexPageView(TemplateView, FormView):
 			sql1 = 'SELECT Value FROM Stocks WHERE TickerSymbol=?'
 			args1 = (symbol,)
 			record1 = common.db_helper.db_query(sql1, args1)
-			price = record1['Value']
+			price = record1[0]['Value']
 
 			# get user's current USD
 			sql2 = 'SELECT Quantity FROM Portfolios WHERE Username=? AND Symbol=?'
@@ -78,14 +79,14 @@ class IndexPageView(TemplateView, FormView):
 			record2 = common.db_helper.db_query(sql2, args2)
 			current_USD_in_wallet = 0
 			if record2:
-				current_USD_in_wallet = record2['Quantity']
+				current_USD_in_wallet = record2[0]['Quantity']
 
 			# get user's current stock quantity
 			sql3 = 'SELECT Quantity FROM Portfolios WHERE Username=? AND Symbol=?'
 			args3 = (user, symbol)
 			record3 = common.db_helper.db_query(sql3, args3)
 			if record3:
-				current_stock_in_wallet = record3['Quantity']
+				current_stock_in_wallet = record3[0]['Quantity']
 			else:
 				# This means no record of user + stock exists. Create new entry later if valid
 				current_stock_in_wallet = 0
@@ -93,7 +94,7 @@ class IndexPageView(TemplateView, FormView):
 			order_cost = quantity * price
 
 			# Begin applying order to user's portfolio...
-			if self.request.get_full_path().split("&")[2] == 'buy=':
+			if quantity > 0:
 				# buy order
 				if current_USD_in_wallet >= order_cost:
 					if current_stock_in_wallet == 0:
@@ -113,8 +114,7 @@ class IndexPageView(TemplateView, FormView):
 					updated_USD_quantity = current_USD_in_wallet - order_cost
 					args5 = (updated_USD_quantity, user, "USD")
 					common.db_helper.db_execute(sql5, args5)
-			elif self.request.get_full_path().split("&")[2] == 'sell=':
-				quantity *= -1
+			elif quantity < 0:
 				# sell order
 				if current_stock_in_wallet <= abs(quantity):
 					# If user asks to sell more than he has, sell only his remaining stock.
@@ -127,7 +127,7 @@ class IndexPageView(TemplateView, FormView):
 					args7 = (user, symbol)
 					common.db_helper.db_execute(sql7, args7)
 				else:
-					updated_USD_quantity = current_USD_in_wallet + order_cost
+					updated_USD_quantity = current_USD_in_wallet - order_cost
 
 				# Since quantity is currently just negative for sell orders, we will add quantity
 
