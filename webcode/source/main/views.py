@@ -43,16 +43,19 @@ class IndexPageView(TemplateView, FormView):
 		# For now enter the username manually. This will be different for everyone
 		user = self.request.user.username
 		print(user)
-		sqlstocks = 'SELECT * FROM Portfolios WHERE Symbol="AAPL"; '
+		sqlstocks = 'SELECT * FROM Portfolios WHERE Symbol <> "USD"; '
 		argsstocks = (user,)
 		recordstocks = common.db_helper.db_query(sqlstocks)
+		print(type(recordstocks))
 		print("userstocks:")
+		txt = ""
+		userstocks = []
 		for elem in recordstocks:
-			print(elem)
-	
+			userstocks.append(elem['Symbol'])
+
 		if self.request.get_full_path() == '/':
 			context['symbol'] = ''
-			context['stocks'] = recordstocks#QUERY HERE
+			context['stocks'] = userstocks#QUERY HERE
 		elif '?stockdata=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
 			temp = (url.split('?stockdata=')[1])
 			context['symbol'] = temp
