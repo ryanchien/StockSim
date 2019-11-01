@@ -41,7 +41,13 @@ class IndexPageView(TemplateView, FormView):
 		url = self.request.get_full_path()
 		# user = user.request.username
 		# For now enter the username manually. This will be different for everyone
-		user = 'thebob'
+		user = self.request.user.username
+		print(user)
+		sqlstocks = 'SELECT Symbol FROM Portfolios WHERE Username=? '
+		argsstocks = (user,)
+		recordstocks = common.db_helper.db_query(sqlstocks, (user,))
+		#print("userstocks:")
+		#print(recordstocks['Symbol'])
 		
 		if self.request.get_full_path() == '/':
 			context['symbol'] = ''
