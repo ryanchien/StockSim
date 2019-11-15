@@ -1,6 +1,9 @@
 # StockSim
 cs411 project
 
+AF1:
+Evaluate whether a searched stock is a good purchase for long-term and short-term investment. Use historical market data from worldtradingdata to search for stock price by date.
+
 TODO list:
 1) Front-end: user types in a stock name they want info on and the info gets returned.
       - In backend, write a view that uses this input to query db and return the stock info.
