@@ -15,6 +15,7 @@ from django.conf import settings
 import requests
 from django.urls import reverse
 import common.db_helper
+import time
 
 from django.views.generic import View, FormView
 from .forms import StocksForm, BuySellForm
@@ -42,12 +43,12 @@ class IndexPageView(TemplateView, FormView):
 		# user = user.request.username
 		# For now enter the username manually. This will be different for everyone
 		user = self.request.user.username
-		print(user)
+		#print(user)
 		sqlstocks = 'SELECT * FROM Portfolios WHERE Symbol <> "USD"; '
 		argsstocks = (user,)
 		recordstocks = common.db_helper.db_query(sqlstocks)
-		print(type(recordstocks))
-		print("userstocks:")
+		#print(type(recordstocks))
+		#print("userstocks:")
 		txt = ""
 		userstocks = []
 		for elem in recordstocks:
@@ -114,6 +115,13 @@ class IndexPageView(TemplateView, FormView):
 					updated_USD_quantity = current_USD_in_wallet - order_cost
 					args5 = (updated_USD_quantity, user, "USD")
 					common.db_helper.db_execute(sql5, args5)
+
+					# Update transaction history
+					sql7 = 'INSERT INTO TradingHistory (TimePurchased, Price, Quantity, User, Symbol, BuySell) VALUES (?,?,?,?,?,?)'
+					args7 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,quantity,user,symbol,'B')
+					common.db_helper.db_execute(sql7, args7)
+
+					print(time.strftime('%Y-%m-%d %H:%M:%S') + " " + str(price) + " " + str(quantity) + " "  + user)
 			elif self.request.get_full_path().split("&")[2] == 'sell=':
 				quantity *= -1
 				# sell order
@@ -129,6 +137,11 @@ class IndexPageView(TemplateView, FormView):
 					common.db_helper.db_execute(sql7, args7)
 				else:
 					updated_USD_quantity = current_USD_in_wallet + order_cost
+
+				sql8 = 'INSERT INTO TradingHistory (TimePurchased, Price, Quantity, User, Symbol, BuySell) VALUES (?,?,?,?,?,?)'
+				args8 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,abs(quantity),user,symbol,'S')
+				common.db_helper.db_execute(sql8, args8)
+
 
 				# Since quantity is currently just negative for sell orders, we will add quantity
 
