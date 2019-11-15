@@ -56,7 +56,19 @@ class IndexPageView(TemplateView, FormView):
 
 		if self.request.get_full_path() == '/':
 			context['symbol'] = ''
-			context['stocks'] = userstocks#QUERY HERE
+			context['stocks'] = userstocks
+			#QUERY HERE
+#         if '?tvwidgetsymbol=' in self.request.get_full_path():
+#                 print("got heregf adsgzdbghs")
+#                 temp = (url.split('?tvwidgetsymbol=')[1])
+#                 temp = temp.split('NASDAQ:')[1]
+#                 print("thestock", temp)
+#                 context['symbol'] = temp
+		elif '?tvwidgetsymbol=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
+			temp = (url.split('?tvwidgetsymbol=')[1])
+			context['symbol'] = temp
+
+
 		elif '?stockdata=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
 			temp = (url.split('?stockdata=')[1])
 			context['symbol'] = temp
