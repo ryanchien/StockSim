@@ -16,6 +16,7 @@ import requests
 from django.urls import reverse
 import common.db_helper
 import time
+from datetime import date, timedelta
 
 from django.views.generic import View, FormView
 from .forms import StocksForm, BuySellForm
@@ -72,6 +73,32 @@ class IndexPageView(TemplateView, FormView):
 		elif '?stockdata=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
 			temp = (url.split('?stockdata=')[1])
 			context['symbol'] = temp
+
+			'''
+			days_before = (date.today()-timedelta(days=7)).isoformat()
+			#print(days_before)
+			par = {'symbol':temp, 'api_token':'svaMvA7fFajd6B3EBsfrLZL6lCfmqLl6vJgCbGPBisqN74QPzH3kF49JDqR4','date_from':days_before, 'date_to':days_before}
+			response = requests.get(url = 'https://api.worldtradingdata.com/api/v1/history', params = par)
+			stock = response.json() if response and response.status_code == 200 else None
+			par2 = {'symbol':temp, 'api_token':'svaMvA7fFajd6B3EBsfrLZL6lCfmqLl6vJgCbGPBisqN74QPzH3kF49JDqR4'}
+			response2 = requests.get(url = 'https://api.worldtradingdata.com/api/v1/stock', params = par)
+			stock2 = response2.json() if response2 and response2.status_code == 200 else None
+			#print(stock2)
+			prev_high = float(stock['history'][days_before]['high'])
+			prev_low = float(stock['history'][days_before]['low'])
+			curr_price = float(stock2['data'][0]['price'])
+			prev_avg = (prev_high + prev_low)/2.0
+			perc_diff = curr_price/prev_avg
+			'''
+			'''
+			@TODO
+			check transaction history table
+			'''
+			#sql = 'CREATE TRIGGER limit_order AFTER UPDATE OF Value ON Stocks BEGIN UPDATE Portfolios SET WHERE END;'
+			#args = (symbol,)
+			#record = common.db_helper.db_query(sql, args)
+
+
 			#last_symbol = url.split('?stockdata=')[1]
 		elif '&stockdata=' in self.request.get_full_path() and '?buysellvolume=' in self.request.get_full_path():
 			temp = url.split('?buysellvolume=')
@@ -129,8 +156,8 @@ class IndexPageView(TemplateView, FormView):
 					common.db_helper.db_execute(sql5, args5)
 
 					# Update transaction history
-					sql7 = 'INSERT INTO TradingHistory (TimePurchased, Price, Quantity, User, Symbol, BuySell) VALUES (?,?,?,?,?,?)'
-					args7 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,quantity,user,symbol,'B')
+					sql7 = 'INSERT INTO TradingHistory (TimePurchased, Price, Quantity, User, Symbol, BuySell, LimitOpen) VALUES (?,?,?,?,?,?,?)'
+					args7 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,quantity,user,symbol,'B', 'Closed')
 					common.db_helper.db_execute(sql7, args7)
 
 					print(time.strftime('%Y-%m-%d %H:%M:%S') + " " + str(price) + " " + str(quantity) + " "  + user)
@@ -150,8 +177,8 @@ class IndexPageView(TemplateView, FormView):
 				else:
 					updated_USD_quantity = current_USD_in_wallet + order_cost
 
-				sql8 = 'INSERT INTO TradingHistory (TimePurchased, Price, Quantity, User, Symbol, BuySell) VALUES (?,?,?,?,?,?)'
-				args8 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,abs(quantity),user,symbol,'S')
+				sql8 = 'INSERT INTO TradingHistory (TimePurchased, Price, Quantity, User, Symbol, BuySell, LimitOpen) VALUES (?,?,?,?,?,?,?)'
+				args8 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,abs(quantity),user,symbol,'S', 'Closed')
 				common.db_helper.db_execute(sql8, args8)
 
 

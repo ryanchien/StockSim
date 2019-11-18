@@ -40,6 +40,7 @@ CREATE TABLE TradingHistory (
     User            CHAR(256),
     Symbol          CHAR(256),
     BuySell         CHAR(1),
+    LimitOpen       CHAR(6)
 );
 
 
