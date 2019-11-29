@@ -48,6 +48,13 @@ class IndexPageView(TemplateView, FormView):
 		sqlstocks = 'SELECT * FROM Portfolios WHERE Symbol <> "USD"; '
 		argsstocks = (user,)
 		recordstocks = common.db_helper.db_query(sqlstocks)
+		sql_user_wallet = 'SELECT Quantity FROM Portfolios WHERE Username=? AND Symbol=?'
+		args2 = (user, 'USD')
+		record2 = common.db_helper.db_query(sql_user_wallet, args2)
+		user_wallet = 0
+		if record2:
+			user_wallet = record2[0]['Quantity']
+		context['user_capital'] = user_wallet
 		#print(type(recordstocks))
 		#print("userstocks:")
 		txt = ""
@@ -73,6 +80,7 @@ class IndexPageView(TemplateView, FormView):
 		elif '?stockdata=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
 			temp = (url.split('?stockdata=')[1])
 			context['symbol'] = temp
+
 
 			'''
 			days_before = (date.today()-timedelta(days=7)).isoformat()
@@ -120,7 +128,6 @@ class IndexPageView(TemplateView, FormView):
 			current_USD_in_wallet = 0
 			if record2:
 				current_USD_in_wallet = record2[0]['Quantity']
-
 			# get user's current stock quantity
 			sql3 = 'SELECT Quantity FROM Portfolios WHERE Username=? AND Symbol=?'
 			args3 = (user, symbol)
@@ -154,6 +161,8 @@ class IndexPageView(TemplateView, FormView):
 					updated_USD_quantity = current_USD_in_wallet - order_cost
 					args5 = (updated_USD_quantity, user, "USD")
 					common.db_helper.db_execute(sql5, args5)
+					context['user_capital'] = updated_USD_quantity
+
 
 					# Update transaction history
 					sql7 = 'INSERT INTO TradingHistory (TimePurchased, Price, Quantity, User, Symbol, BuySell, LimitOpen) VALUES (?,?,?,?,?,?,?)'
@@ -194,7 +203,6 @@ class IndexPageView(TemplateView, FormView):
 				sql5 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
 				args5 = (updated_USD_quantity, user, "USD")
 				common.db_helper.db_execute(sql5, args5)
-
 			url = self.request.get_full_path()
 			temp = url.split('?buysellvolume=')
 			context['volume'] = (temp[1])[: temp[1].find('&')]
@@ -204,35 +212,7 @@ class IndexPageView(TemplateView, FormView):
 		return context
 
 
-'''
-	def form_valid(self, form):
-		print("okokokok")
-		request = self.request
-		if isinstance(form, StocksForm):
-			print("symbol")
-			return redirect('symbol', symbol=form.cleaned_data['stockdata'])
-		elif isinstance(form, BuySellForm):
-			print("volume")
-			return redirect('volume', symbol=self.request.get_full_path(), volume=form.cleaned_data['buysellvolume'])
-		print("doing")
-		return redirect('index')
-'''
 	
-'''
-	def get_context_data(self, **kwargs):
-		context = super().get_context_data(**kwargs)
-		
-		# This is just an example of how to query the db to pull information.
-		# To use this we just need
-		sql = 'SELECT * FROM Stock WHERE TickerSymbol=?'
-		arg = ('APPL',)
-		record = common.db_helper.db_query(sql, arg)
-		if record:
-			context['symbol'] = record['TickerSymbol']
-		else:
-			context['symbol'] = 'Does not exist'
-		return context
-'''
 
 
 
