@@ -15,6 +15,24 @@
       <button type="submit" name = "sell">sell</button>
       {% endif %}
     </form>
+
+    <div class="dropdown show">
+        <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Your Portfolio
+        </a>
+      
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+            <a class="dropdown-item" style = "text-decoration: underline; font-weight: bold;">Stockname  Quantity</a>
+            {% for stock,quant in stock_quantity %}
+            
+              <a class="dropdown-item"   href="http://localhost:8000/?tvwidgetsymbol=NASDAQ:{{stock}}"><div style = "float:left; color:rgb(78, 109, 136);"> {{stock }}</div> <div style = "float:right; color:rgb(78, 109, 136)">{{quant}}</div></a>
+              
+            
+          {% endfor %}
+          
+          
+        </div>
+      </div>
 <!--
     {% if symbol != "" %}
       <input method = "get" type="save" name="BuyField" value="0">

@@ -34,6 +34,10 @@ class IndexPageView(TemplateView, FormView):
 		url = self.request.get_full_path()
 		if url == '/':
 			return StocksForm
+		elif('?stockdata=' in self.request.get_full_path() or '?tvwidgetsymbol=' in self.request.get_full_path()):
+			print("fewo iqfer uweoiu")
+			return BuySellForm
+
 		else:	
 			return BuySellForm
 
@@ -45,9 +49,9 @@ class IndexPageView(TemplateView, FormView):
 		# For now enter the username manually. This will be different for everyone
 		user = self.request.user.username
 		#print(user)
-		sqlstocks = 'SELECT * FROM Portfolios WHERE Symbol <> "USD"; '
+		sqlstocks = 'SELECT Symbol FROM Portfolios WHERE Symbol <> "USD" AND Username =? '
 		argsstocks = (user,)
-		recordstocks = common.db_helper.db_query(sqlstocks)
+		recordstocks = common.db_helper.db_query(sqlstocks, argsstocks)
 		sql_user_wallet = 'SELECT Quantity FROM Portfolios WHERE Username=? AND Symbol=?'
 		args2 = (user, 'USD')
 		record2 = common.db_helper.db_query(sql_user_wallet, args2)
@@ -55,6 +59,11 @@ class IndexPageView(TemplateView, FormView):
 		if record2:
 			user_wallet = record2[0]['Quantity']
 		context['user_capital'] = user_wallet
+		stock_quant_sql = 'SELECT Symbol, Quantity FROM Portfolios WHERE Symbol <> "USD" AND Username =? '
+		argsstocks = (user,)
+		stock_quantities_query = common.db_helper.db_query(stock_quant_sql, argsstocks)
+		stock_quantities = [(d['Symbol'], int(d['Quantity'])) for d in stock_quantities_query]
+		context['stock_quantity'] = stock_quantities
 		#print(type(recordstocks))
 		#print("userstocks:")
 		txt = ""
@@ -185,6 +194,7 @@ class IndexPageView(TemplateView, FormView):
 					common.db_helper.db_execute(sql7, args7)
 				else:
 					updated_USD_quantity = current_USD_in_wallet + order_cost
+				context['user_capital'] = updated_USD_quantity
 
 				sql8 = 'INSERT INTO TradingHistory (TimePurchased, Price, Quantity, User, Symbol, BuySell, LimitOpen) VALUES (?,?,?,?,?,?,?)'
 				args8 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,abs(quantity),user,symbol,'S', 'Closed')
