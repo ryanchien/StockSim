@@ -25,6 +25,7 @@ from django.shortcuts import get_object_or_404, redirect
 #last_symbol = ""
 
 class IndexPageView(TemplateView, FormView):
+	
 	template_name = 'main/index.html'
 
 
@@ -49,12 +50,12 @@ class IndexPageView(TemplateView, FormView):
 		# For now enter the username manually. This will be different for everyone
 		user = self.request.user.username
 		#print(user)
-		sqlstocks = 'SELECT Symbol FROM Portfolios WHERE Symbol <> "USD" AND Username =? '
-		argsstocks = (user,)
-		recordstocks = common.db_helper.db_query(sqlstocks, argsstocks)
+		sql_stocks = 'SELECT Symbol FROM Portfolios WHERE Symbol <> "USD" AND Username =? '
+		args_stocks = (user,)
+		recordstocks = common.db_helper.db_query(sql_stocks, args_stocks)
 		sql_user_wallet = 'SELECT Quantity FROM Portfolios WHERE Username=? AND Symbol=?'
-		args2 = (user, 'USD')
-		record2 = common.db_helper.db_query(sql_user_wallet, args2)
+		args_user_wallet = (user, 'USD')
+		record2 = common.db_helper.db_query(sql_user_wallet, args_user_wallet)
 		user_wallet = 0
 		if record2:
 			user_wallet = record2[0]['Quantity']
@@ -64,6 +65,13 @@ class IndexPageView(TemplateView, FormView):
 		stock_quantities_query = common.db_helper.db_query(stock_quant_sql, argsstocks)
 		stock_quantities = [(d['Symbol'], int(d['Quantity'])) for d in stock_quantities_query]
 		context['stock_quantity'] = stock_quantities
+
+		sql_open_orders = 'SELECT rowid, Symbol, Quantity, BuySell FROM TradingHistory WHERE User =? AND OpenOrder = 1'
+		args_open_orders = (user,)
+		open_orders_query = common.db_helper.db_query(sql_open_orders, args_open_orders)
+		open_orders = [(row['rowid'], row['Symbol'], int(row['Quantity']), row['BuySell']) for row in open_orders_query]
+		context['open_orders'] = open_orders
+
 		#print(type(recordstocks))
 		#print("userstocks:")
 		txt = ""
@@ -222,6 +230,7 @@ class IndexPageView(TemplateView, FormView):
 		return context
 
 
+    #return render(request, 'new/click.html',{'value':'Button clicked'})
 	
 
 

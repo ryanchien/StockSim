@@ -1,6 +1,14 @@
 {% extends 'layouts/default/page.html' %} {% load i18n %} {% block content %} {% if request.user.is_authenticated %} {% trans 'Your username is' %} <b>{{ request.user.username }}</b>. {% else %} {% trans 'You are a guest.' %} {% endif %}
 
-  
+<style>
+btn-group-xs > .btn, .btn-xs {
+  padding: .25rem .4rem;
+  font-size: .875rem;
+  line-height: .5;
+  border-radius: .2rem;
+}
+
+</style>
 <p style = "color: rgb(78, 109, 136)"> WORLD TRADING DATA </p>
   
  <p style = "color:rgb(78, 109, 136)">YOUR CAPITAL : {{user_capital}}</p>
@@ -16,8 +24,14 @@
       {% endif %}
     </form>
 
+
+
+
+    <div class="btn-toolbar">
+
+  
     <div class="dropdown show">
-        <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style =" margin-right: 10px;">
           Your Portfolio
         </a>
       
@@ -33,6 +47,38 @@
           
         </div>
       </div>
+
+      <div class="dropdown show" >
+        <a class="btn btn-secondary dropdown-toggle"  role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" >
+          Your Orders
+        </a>
+      
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuLink"  >
+            <a class="dropdown-item" style = "font-weight: bold;"><p style = "display:inline; text-decoration:underline;">Stockname</p> <p style = "display:inline; text-decoration:underline;">Quantity</p> <p style = "display:inline; text-decoration:underline;">Amount</p>   </a>
+            {% for rowid,Symbol,Quantity,BuySell in open_orders %}
+            
+              <a class="dropdown-item"  style = "color:rgb(78, 109, 136); "  > <div style = "margin-right: 50px; display:inline-block"> {{Symbol}} </div> <div style = "margin-right: 50px; display:inline-block">{{Quantity}}&nbsp; &nbsp; &nbsp;  &nbsp;&nbsp; &nbsp; &nbsp;  
+                {% if  BuySell == 'B' %}
+                 Buy
+                {% else %}
+                Sell
+                {% endif %}
+                &nbsp;&nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp; 
+                <form action = "#" method = "get">  
+                    <input type="submit" class="btn btn-primary"  value="cancel" name="mybtn{{rowid}}" style = "float:right;margin-top:-20px; background-color:rgb(204, 0, 0); " name = "print-btn">                
+                
+                </form></div> </a>
+              
+            
+          {% endfor %}
+          
+          
+        </div>
+      </div>
+
+    </div>
+
+      
 <!--
     {% if symbol != "" %}
       <input method = "get" type="save" name="BuyField" value="0">
