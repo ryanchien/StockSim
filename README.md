@@ -1,6 +1,18 @@
 # StockSim
 cs411 project
 
+AF1:
+Evaluate whether a searched stock is a good purchase for long-term and short-term investment. Use historical market data from worldtradingdata to search for stock price by date.
+
+******************************************************************************************************************************
+New TODO List:
+1) Script to update stock info every minute
+2) Re-structure database tables to include transaction history table that holds open and closed orders
+3) Add trigger that will execute market orders based on if our advanced function that's used for analyzing good and bad trades says its a good order
+4) Add trigger that will update portfolio and transaction history based on updated stock prices
+5) NoSQL thing
+
+******************************************************************************************************************************
 TODO list:
 1) Front-end: user types in a stock name they want info on and the info gets returned.
       - In backend, write a view that uses this input to query db and return the stock info.

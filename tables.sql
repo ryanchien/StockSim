@@ -34,12 +34,13 @@ CREATE TABLE Stock (
 );
 
 CREATE TABLE TradingHistory (
-    TransactionID   INT IDENTITY(1,1) NOT NULL,   --replace AUTO_INCREMENT
-    TimeOpened      DATE,
-    TimeFilled      DATE,
+    TimePurchased      DATE,
     Price           FLOAT,
-    Quantity        INT,
-    PRIMARY KEY TransactionID
+    Quantity        INTEGER,
+    User            CHAR(256),
+    Symbol          CHAR(256),
+    BuySell         CHAR(1),
+    LimitOpen       CHAR(6)
 );
 
 

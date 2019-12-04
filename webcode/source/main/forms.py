@@ -36,7 +36,10 @@ class BuySellForm(forms.Form):
     stockdata = forms.CharField(label = _('StockName'), strip=False, max_length=500)
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+       #self.kwargs = {'initial': {}, 'prefix': None}
+       super().__init__(*args, **kwargs)
+
+    #self.fields['stockdata'].initial = (kwargs['name']) # or whatever you want the initial value to be
     
 
     def get_buy_volume(self):
