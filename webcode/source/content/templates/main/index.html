@@ -11,7 +11,39 @@ btn-group-xs > .btn, .btn-xs {
 </style>
 <p style = "color: rgb(78, 109, 136)"> WORLD TRADING DATA </p>
   
- <p style = "color:rgb(78, 109, 136)">YOUR CAPITAL : {{user_capital}}</p>
+ <p style = "color:rgb(78, 109, 136); display:inline">YOUR CAPITAL : {{user_capital}}</p>
+
+ 
+ 
+ {% if symbol != ""  and ord_type == 'Market' %}
+
+ <div class="btn-group" style = "margin-left:120px;  display:inline">
+  <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Market Order
+  </button>
+  <div class="dropdown-menu">
+      <form method="get">
+    <input class="dropdown-item" type="submit" name = "limitorder" value = "Limit Order" >
+    </form>
+  </div>
+</div>
+  {% endif %}
+  
+  
+  {% if symbol != ""  and ord_type == 'Limit' %}
+<div class="btn-group" style = "margin-left:120px;  display:inline">
+    <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Limit Order
+    </button>
+    <div class="dropdown-menu">
+        <form method="get">
+      <input class="dropdown-item" type="submit" name = "limitorder" value = "Market Order" >
+      </form>
+    </div>
+  </div>
+
+  {% endif %}
+
 
 
     <form method="get" id=1>

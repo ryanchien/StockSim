@@ -21,7 +21,7 @@ import re
 from datetime import date, timedelta
 
 from django.views.generic import View, FormView
-from .forms import StocksForm, BuySellForm
+from .forms import StocksForm, BuySellForm, LimitForm
 from django.shortcuts import get_object_or_404, redirect
 
 #last_symbol = ""
@@ -37,9 +37,14 @@ class IndexPageView(TemplateView, FormView):
 		url = self.request.get_full_path()
 		if url == '/':
 			return StocksForm
+
+		if('Limit+Order' in self.request.get_full_path()):
+			return LimitForm
+
 		elif('?stockdata=' in self.request.get_full_path() or '?tvwidgetsymbol=' in self.request.get_full_path()):
 			print("fewo iqfer uweoiu")
 			return BuySellForm
+		
 
 		else:	
 			return BuySellForm
@@ -48,6 +53,13 @@ class IndexPageView(TemplateView, FormView):
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
 		url = self.request.get_full_path()
+		
+		if('Limit+Order' in url):
+			print("THIS IS LIMIT ORDER")
+			context['ord_type'] = 'Limit'
+		else:
+			print("THIS IS MARKET ORDER")
+			context['ord_type'] = 'Market'
 		# user = user.request.username
 		# For now enter the username manually. This will be different for everyone
 		user = self.request.user.username
