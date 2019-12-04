@@ -30,8 +30,7 @@ CREATE TRIGGER CloseLimitOrder
         SET OpenOrder = 0
         WHERE OpenOrder = 1 AND
               old.TickerSymbol = Symbol AND
-              BuySell = 'B' AND
-              new.Value <= AskingPrice;
+              ((BuySell = 'B' AND new.Value <= AskingPrice) OR (BuySell = 'S' AND new.Value >= AskingPrice));
     END;
 
 -- Cascaded from CloseLimitOrder trigger, apply filled buy order to portfolio 
@@ -44,6 +43,14 @@ CREATE TRIGGER ApplyClosedBuyOrdersToNewRow
             VALUES (old.User, old.Symbol, old.Quantity);
     END;
 
+CREATE TRIGGER ApplyClosedSellOrdersToNewRow
+    AFTER UPDATE OF OpenOrder ON TradingHistory
+    WHEN (old.BuySell = 'S' AND NOT EXISTS (SELECT * FROM Portfolios WHERE Symbol = 'USD' AND Username = old.User))
+    BEGIN
+        INSERT INTO Portfolios
+            VALUES (old.User, 'USD', (old.Quantity * old.AskingPrice));
+    END;
+
 -- Cascaded from CloseLimitOrder trigger, apply filled buy order to portfolio
 --      record exists, so add order quantity to current quantity
 CREATE TRIGGER ApplyClosedBuyOrdersToExistingRow
@@ -53,8 +60,19 @@ CREATE TRIGGER ApplyClosedBuyOrdersToExistingRow
     BEGIN
         UPDATE Portfolios
             SET Quantity = Quantity + old.Quantity
-            WHERE old.Symbol = Symbol AND
-                  old.User = Username;
+            WHERE Symbol = old.Symbol AND
+                  Username = old.User;
+    END;
+
+CREATE TRIGGER ApplyClosedSellOrdersToExistingRow
+    AFTER UPDATE OF OpenOrder ON TradingHistory
+    FOR EACH ROW
+    WHEN (old.BuySell = 'S' AND EXISTS (SELECT * FROM Portfolios WHERE Symbol = 'USD' AND Username = old.User))
+    BEGIN
+        UPDATE Portfolios
+            SET Quantity = Quantity + old.Quantity
+            WHERE Symbol = 'USD' AND
+                  Username = old.User;
     END;
 
 -- When limit buy order is cancelled, want to reimburse escrow USD of user
@@ -69,6 +87,17 @@ CREATE TRIGGER ApplyCancelledBuyOrdersToExistingRow
                   Symbol = 'USD';
     END;
 
+CREATE TRIGGER ApplyCancelledSellOrdersToExistingRow
+    AFTER DELETE ON TradingHistory
+    FOR EACH ROW
+    WHEN (old.BuySell = 'S' AND EXISTS (SELECT * FROM Portfolios WHERE Symbol = old.Symbol AND Username = old.User))
+    BEGIN
+        UPDATE Portfolios
+            SET Quantity = Quantity + old.Quantity
+            WHERE Username = old.User AND
+                  Symbol = old.Symbol;
+    END;
+
 -- When limit buy order is cancelled, want to reimburse escrow USD of user
 CREATE TRIGGER ApplyCancelledBuyOrdersToNewRow
     AFTER DELETE ON TradingHistory
@@ -78,6 +107,14 @@ CREATE TRIGGER ApplyCancelledBuyOrdersToNewRow
             VALUES (old.User, 'USD', (old.Quantity * old.AskingPrice));
     END;
 
+CREATE TRIGGER ApplyCancelledSellOrdersToNewRow
+    AFTER DELETE ON TradingHistory
+    WHEN (old.BuySell = 'S' AND NOT EXISTS (SELECT * FROM Portfolios WHERE Symbol = old.Symbol AND Username = old.User))
+    BEGIN
+        INSERT INTO Portfolios
+            VALUES (old.User, old.Symbol, old.Quantity);
+    END;
+
 -- Would we need to have a separate trigger for when we make an order resulting in 0 USD in portfolio?
 -- Since the logically invalid buy order (order where user has insufficient funds) will be handled in backend, 
     -- only need to consider equal to as an extra case
@@ -85,17 +122,27 @@ CREATE TRIGGER SubtractBuyOrderCostToEmpty
     BEFORE INSERT ON TradingHistory
     WHEN new.BuySell = 'B' AND 
          new.OpenOrder = 1 AND 
-         (new.AskingPrice * new.Quantity) = (SELECT Quantity FROM Portfolios WHERE Username = new.User AND Symbol = new.Symbol)
+         (new.AskingPrice * new.Quantity) = (SELECT Quantity FROM Portfolios WHERE Username = new.User AND Symbol = 'USD')
     BEGIN
         DELETE FROM Portfolios
             WHERE Username = new.User AND Symbol = 'USD';
+    END;
+
+CREATE TRIGGER SubtractSellOrderCostToEmpty
+    BEFORE INSERT ON TradingHistory
+    WHEN new.BuySell = 'S' AND 
+         new.OpenOrder = 1 AND 
+         new.Quantity = (SELECT Quantity FROM Portfolios WHERE Username = new.User AND Symbol = new.Symbol)
+    BEGIN
+        DELETE FROM Portfolios
+            WHERE Username = new.User AND Symbol = new.Symbol;
     END;
 
 CREATE TRIGGER SubtractBuyOrderCost
     BEFORE INSERT ON TradingHistory
     WHEN new.BuySell = 'B' AND 
          new.OpenOrder = 1 AND 
-         (new.AskingPrice * new.Quantity) <> (SELECT Quantity FROM Portfolios WHERE Username = new.User AND Symbol = new.Symbol)
+         (new.AskingPrice * new.Quantity) <> (SELECT Quantity FROM Portfolios WHERE Username = new.User AND Symbol = 'USD')
     BEGIN
         UPDATE Portfolios
             SET Quantity = Quantity - (new.AskingPrice * new.Quantity)
@@ -103,16 +150,26 @@ CREATE TRIGGER SubtractBuyOrderCost
                   Symbol = 'USD';
     END;
 
-
+CREATE TRIGGER SubtractSellOrderCost
+    BEFORE INSERT ON TradingHistory
+    WHEN new.BuySell = 'S' AND 
+         new.OpenOrder = 1 AND 
+         new.Quantity <> (SELECT Quantity FROM Portfolios WHERE Username = new.User AND Symbol = new.Symbol)
+    BEGIN
+        UPDATE Portfolios
+            SET Quantity = Quantity - new.Quantity
+            WHERE Username = new.User AND 
+                  Symbol = new.Symbol;
+    END;
 
 CREATE TABLE TradingHistory (
-TimePurchased DATE,
-User CHAR(256),
-Symbol Char(256),
-AskingPrice FLOAT,
-Quantity INTEGER,
-BuySell Char(1),
-OpenOrder INT(1)
+    TimePurchased DATE NOT NULL,
+    User TEXT NOT NULL,
+    Symbol TEXT NOT NULL,
+    AskingPrice FLOAT NOT NULL,
+    Quantity INTEGER NOT NULL,
+    BuySell Char(1),
+    OpenOrder INT(1)
 );     
 
     
