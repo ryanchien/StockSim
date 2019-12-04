@@ -16,6 +16,8 @@ import requests
 from django.urls import reverse
 import common.db_helper
 import time
+import re
+
 from datetime import date, timedelta
 
 from django.views.generic import View, FormView
@@ -125,6 +127,12 @@ class IndexPageView(TemplateView, FormView):
 
 
 			#last_symbol = url.split('?stockdata=')[1]
+		elif 'cancelOrder' in self.request.get_full_path():
+			order_id =  (re.search('cancelOrder(.*)=cancel', self.request.get_full_path()).group(1))
+			sql_cancel = 'DELETE FROM TradingHistory WHERE rowid=?'
+			args_cancel = (order_id,)
+			common.db_helper.db_execute(sql_cancel, args_cancel)
+
 		elif '&stockdata=' in self.request.get_full_path() and '?buysellvolume=' in self.request.get_full_path():
 			temp = url.split('?buysellvolume=')
 			quantity = int((temp[1])[: temp[1].find('&')])
