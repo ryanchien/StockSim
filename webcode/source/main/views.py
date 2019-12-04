@@ -41,7 +41,7 @@ class IndexPageView(TemplateView, FormView):
 		if('Limit+Order' in self.request.get_full_path()):
 			return LimitForm
 
-		elif('?stockdata=' in self.request.get_full_path() or '?tvwidgetsymbol=' in self.request.get_full_path()):
+		elif('stockdata=' in self.request.get_full_path() or '?tvwidgetsymbol=' in self.request.get_full_path()):
 			print("fewo iqfer uweoiu")
 			return BuySellForm
 		
@@ -108,8 +108,8 @@ class IndexPageView(TemplateView, FormView):
 			context['symbol'] = temp
 
 
-		elif '?stockdata=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
-			temp = (url.split('?stockdata=')[1])
+		elif 'stockdata=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
+			temp = (url.split('stockdata=')[1])
 			context['symbol'] = temp
 
 
@@ -145,10 +145,10 @@ class IndexPageView(TemplateView, FormView):
 			args_cancel = (order_id,)
 			common.db_helper.db_execute(sql_cancel, args_cancel)
 
-		elif '&stockdata=' in self.request.get_full_path() and '?buysellvolume=' in self.request.get_full_path():
+		elif 'stockdata=' in self.request.get_full_path() and '?buysellvolume=' in self.request.get_full_path():
 			temp = url.split('?buysellvolume=')
 			quantity = int((temp[1])[: temp[1].find('&')])
-			temp = (url.split('&stockdata='))[1]
+			temp = (url.split('stockdata='))[1]
 			symbol = temp[ : temp.find('&')]
 			#print(symbol)
 			
@@ -244,7 +244,7 @@ class IndexPageView(TemplateView, FormView):
 			url = self.request.get_full_path()
 			temp = url.split('?buysellvolume=')
 			context['volume'] = (temp[1])[: temp[1].find('&')]
-			temp = (url.split('&stockdata='))[1]
+			temp = (url.split('stockdata='))[1]
 			#print(temp)
 			context['symbol'] = temp[ : temp.find('&')]
 		return context

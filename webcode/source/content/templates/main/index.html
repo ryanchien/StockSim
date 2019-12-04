@@ -24,6 +24,7 @@ btn-group-xs > .btn, .btn-xs {
   <div class="dropdown-menu">
       <form method="get">
     <input class="dropdown-item" type="submit" name = "limitorder" value = "Limit Order" >
+    <input type="hidden" name="stockdata" value="{{symbol}}" />
     </form>
   </div>
 </div>
@@ -38,6 +39,8 @@ btn-group-xs > .btn, .btn-xs {
     <div class="dropdown-menu">
         <form method="get">
       <input class="dropdown-item" type="submit" name = "limitorder" value = "Market Order" >
+      <input type="hidden" name="stockdata" value="{{symbol}}" />
+
       </form>
     </div>
   </div>
@@ -110,15 +113,6 @@ btn-group-xs > .btn, .btn-xs {
 
     </div>
 
-      
-<!--
-    {% if symbol != "" %}
-      <input method = "get" type="save" name="BuyField" value="0">
-      <input method = "get" type="submit" name="BuyButton" value="Buy">
-      <input method = "get" type="save" name="SellField" value="0">
-      <input method = "get" type="submit" name="SellButton" value="Sell">
-    {% endif %}
--->
 
         <!-- TradingView Widget BEGIN -->
 <!-- TradingView Widget BEGIN -->
