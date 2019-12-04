@@ -190,8 +190,8 @@ class IndexPageView(TemplateView, FormView):
 
 
 					# Update transaction history
-					sql7 = 'INSERT INTO TradingHistory (TimePurchased, Price, Quantity, User, Symbol, BuySell, LimitOpen) VALUES (?,?,?,?,?,?,?)'
-					args7 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,quantity,user,symbol,'B', 'Closed')
+					sql7 = 'INSERT INTO TradingHistory (TimePurchased, AskingPrice, Quantity, User, Symbol, BuySell, OpenOrder) VALUES (?,?,?,?,?,?,?)'
+					args7 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,quantity,user,symbol,'B', 0)
 					common.db_helper.db_execute(sql7, args7)
 
 					print(time.strftime('%Y-%m-%d %H:%M:%S') + " " + str(price) + " " + str(quantity) + " "  + user)
