@@ -161,13 +161,18 @@ class IndexPageView(TemplateView, FormView):
 
 					if current_USD_in_wallet >= order_cost:
 						#@TODO: Consider the case where the limit order gets filled automatically 
-						#if orderprice <= price:
 
 						sql_create_open_order = 'INSERT INTO TradingHistory VALUES (?,?,?,?,?,?,?)'
 						args_create_open_order = (time.strftime('%Y-%m-%d %H:%M:%S'), user, symbol, orderprice, quantity, 'B', 1)
 						common.db_helper.db_execute(sql_create_open_order, args_create_open_order)
 						updated_USD_quantity = current_USD_in_wallet - order_cost
 						context['user_capital'] = updated_USD_quantity
+
+						if orderprice >= price:
+							sql_open_order_filled = 'UPDATE TradingHistory SET OpenOrder = 0 WHERE OpenOrder = 1 AND Symbol = ? AND BuySell = ? AND AskingPrice = ?'
+							args_open_order_filled = (symbol, 'B', orderprice)
+							common.db_helper.db_execute(sql_open_order_filled, args_open_order_filled)
+							# possibly need to update context
 
 				else:
 
@@ -232,8 +237,6 @@ class IndexPageView(TemplateView, FormView):
 
 				if result:
 					# is limit sell order
-					  
-					print("in limit buy order statement")
 
 					orderprice = float(result[1])
 					order_cost = quantity * orderprice
@@ -249,6 +252,12 @@ class IndexPageView(TemplateView, FormView):
 						sql_create_open_order = 'INSERT INTO TradingHistory VALUES (?,?,?,?,?,?,?)'
 						args_create_open_order = (time.strftime('%Y-%m-%d %H:%M:%S'), user, symbol, orderprice, quantity, 'S', 1)
 						common.db_helper.db_execute(sql_create_open_order, args_create_open_order)
+
+						if orderprice <= price:
+							sql_open_order_filled = 'UPDATE TradingHistory SET OpenOrder = 0 WHERE OpenOrder = 1 AND Symbol = ? AND BuySell = ? AND AskingPrice = ?'
+							args_open_order_filled = (symbol, 'S', orderprice)
+							common.db_helper.db_execute(sql_open_order_filled, args_open_order_filled)
+							# possibly need to update context
 
 				else:		
 					# is market sell order
