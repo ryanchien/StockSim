@@ -176,116 +176,186 @@ class IndexPageView(TemplateView, FormView):
 			order_cost = quantity * price
 
 			# Begin applying order to user's portfolio...
-			if self.request.get_full_path().split("&")[2] == 'buy=':
-				# buy order
-				if current_USD_in_wallet >= order_cost:
-					if current_stock_in_wallet == 0:
-						# Should be no record in database if quantity is 0, therefore create new user-stock record
-						sql6 = 'INSERT INTO Portfolios VALUES (?,?,?)'
-						args6 = (user, symbol, quantity)
-						common.db_helper.db_execute(sql6, args6)
+			if re.search('buy=', self.request.get_full_path()):
 
-					# Update with increased stock quantity
-					sql4 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
-					updated_stock_quantity = current_stock_in_wallet + quantity
-					args4 = (updated_stock_quantity, user, symbol)
-					common.db_helper.db_execute(sql4, args4)
+				result = re.search('orderprice=(\\d+)', self.request.get_full_path())
 
-					# Update with decreased USD quantity
-					sql5 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
-					updated_USD_quantity = current_USD_in_wallet - order_cost
-					args5 = (updated_USD_quantity, user, "USD")
-					common.db_helper.db_execute(sql5, args5)
-					context['user_capital'] = updated_USD_quantity
+				if result:
+					# limit buy order
 
-					# Update neo4j nodes
-					neo4j_query0 = "MATCH (s:Stock_Node) WHERE s.symbol='{stocksymbol}' RETURN s;".format(stocksymbol=symbol)
-					stock_node_list = db.cypher_query(neo4j_query0)
-					if (len(stock_node_list[0])==0):
-						stock_node_list = Stock_Node(symbol=symbol, curr_price=price).save()
+					# checking if the available USD quantity the user has is sufficient for order quantity
+        			# updating Portfolios with subtracted USD of buy order (could be turned into a trigger)
+        			# finally, inserting open buy order to TradingHistory
+					# CREATE TABLE TradingHistory (
+					#     TimePurchased DATE NOT NULL,
+					#     User TEXT NOT NULL,
+					#     Symbol TEXT NOT NULL,
+					#     AskingPrice FLOAT NOT NULL,
+					#     Quantity INTEGER NOT NULL,
+					#     BuySell Char(1),
+					#     OpenOrder INT(1)
+					# );    
+					print("in limit buy order statement")
 
-					neo4j_query1 = "MATCH (a:User_Node)-[:OWNS]->(s:Stock_Node) WHERE a.uid='{username}' AND s.symbol='{stocksymbol}' WITH a, collect(DISTINCT s.symbol) as listStocks RETURN listStocks;".format(username=user, stocksymbol=symbol)
-					owned_stock_list = db.cypher_query(neo4j_query1)
-					#print(owned_stock_list)
-					if (len(owned_stock_list[0])==0):
+					orderprice = int(result[1])
+					order_cost = quantity * orderprice
+
+					if current_USD_in_wallet >= order_cost:
+						#@TODO: Consider the case where the limit order gets filled automatically 
+						#if orderprice <= price:
+
+						sql_create_open_order = 'INSERT INTO TradingHistory VALUES (?,?,?,?,?,?,?)'
+						args_create_open_order = (time.strftime('%Y-%m-%d %H:%M:%S'), user, symbol, orderprice, quantity, 'B', 1)
+						common.db_helper.db_execute(sql_create_open_order, args_create_open_order)
+
+				else:
+
+					print("in market buy order statement")
+					# market buy order
+					if current_USD_in_wallet >= order_cost:
+						if current_stock_in_wallet == 0:
+							# Should be no record in database if quantity is 0, therefore create new user-stock record
+							sql6 = 'INSERT INTO Portfolios VALUES (?,?,?)'
+							args6 = (user, symbol, quantity)
+							common.db_helper.db_execute(sql6, args6)
+
+						# Update with increased stock quantity
+						sql4 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
+						updated_stock_quantity = current_stock_in_wallet + quantity
+						args4 = (updated_stock_quantity, user, symbol)
+						common.db_helper.db_execute(sql4, args4)
+
+						# Update with decreased USD quantity
+						sql5 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
+						updated_USD_quantity = current_USD_in_wallet - order_cost
+						args5 = (updated_USD_quantity, user, "USD")
+						common.db_helper.db_execute(sql5, args5)
+						context['user_capital'] = updated_USD_quantity
+
+						# Update neo4j nodes
+						neo4j_query0 = "MATCH (s:Stock_Node) WHERE s.symbol='{stocksymbol}' RETURN s;".format(stocksymbol=symbol)
+						stock_node_list = db.cypher_query(neo4j_query0)
+						if (len(stock_node_list[0])==0):
+							stock_node_list = Stock_Node(symbol=symbol, curr_price=price).save()
+
+						neo4j_query1 = "MATCH (a:User_Node)-[:OWNS]->(s:Stock_Node) WHERE a.uid='{username}' AND s.symbol='{stocksymbol}' WITH a, collect(DISTINCT s.symbol) as listStocks RETURN listStocks;".format(username=user, stocksymbol=symbol)
+						owned_stock_list = db.cypher_query(neo4j_query1)
+						#print(owned_stock_list)
+						if (len(owned_stock_list[0])==0):
+							user_node = User_Node.nodes.get(uid=user)
+							stock_node = Stock_Node.nodes.get(symbol=symbol)
+							user_node.stock.connect(stock_node)
+							port_node = Portfolio_Node(uid=user, symbol=symbol, profit=0.0, quantity=quantity).save()
+							user_node.portfolio.connect(port_node)
+							port_node.stock.connect(stock_node)
+						else:
+							#print("already owns stock")
+							port_node = Portfolio_Node.nodes.get(uid=user, symbol=symbol)
+							port_node.quantity += quantity
+							port_node.save()
+
+						# Update transaction history
+						sql7 = 'INSERT INTO TradingHistory (TimePurchased, AskingPrice, Quantity, User, Symbol, BuySell, OpenOrder) VALUES (?,?,?,?,?,?,?)'
+						args7 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,quantity,user,symbol,'B', 0)
+						common.db_helper.db_execute(sql7, args7)
+						
+						trans_node = Transaction_Node(price=price, buy=True, quantity=quantity,date=date.today()).save()
 						user_node = User_Node.nodes.get(uid=user)
 						stock_node = Stock_Node.nodes.get(symbol=symbol)
-						user_node.stock.connect(stock_node)
-						port_node = Portfolio_Node(uid=user, symbol=symbol, profit=0.0, quantity=quantity).save()
-						user_node.portfolio.connect(port_node)
-						port_node.stock.connect(stock_node)
-					else:
-						#print("already owns stock")
+						user_node.transaction.connect(trans_node)
+						trans_node.stock.connect(stock_node)
+
+						#print(time.strftime('%Y-%m-%d %H:%M:%S') + " " + str(price) + " " + str(quantity) + " "  + user)
+			elif re.search('sell=', self.request.get_full_path()):
+
+				result = re.search('orderprice=(\\d+)', self.request.get_full_path())
+
+				if result:
+					# is limit sell order
+
+					# checking if the available USD quantity the user has is sufficient for order quantity
+        			# updating Portfolios with subtracted USD of buy order (could be turned into a trigger)
+        			# finally, inserting open buy order to TradingHistory
+					# CREATE TABLE TradingHistory (
+					#     TimePurchased DATE NOT NULL,
+					#     User TEXT NOT NULL,
+					#     Symbol TEXT NOT NULL,
+					#     AskingPrice FLOAT NOT NULL,
+					#     Quantity INTEGER NOT NULL,
+					#     BuySell Char(1),
+					#     OpenOrder INT(1)
+					# );    
+					print("in limit buy order statement")
+
+					orderprice = int(result[1])
+					order_cost = quantity * orderprice
+
+					if current_stock_in_wallet >= quantity:
+						# NOTE: We aren't going to handle the case where user enters more quantity than he has to sell.
+						#		We will just ignore this case and not open a partial order as we did for market orders.
+
+						#@TODO: Consider the case where the limit order gets filled automatically. Currently would have to wait
+						#		for next price update.
+						#		if orderprice <= price:
+
+						sql_create_open_order = 'INSERT INTO TradingHistory VALUES (?,?,?,?,?,?,?)'
+						args_create_open_order = (time.strftime('%Y-%m-%d %H:%M:%S'), user, symbol, orderprice, quantity, 'S', 1)
+						common.db_helper.db_execute(sql_create_open_order, args_create_open_order)
+				else:		
+					# is market sell order
+					quantity *= -1
+
+					if current_stock_in_wallet <= abs(quantity):
+						# If user asks to sell more than he has, sell only his remaining stock.
+						# Since quantity will reach 0, delete existing user-stock record
+						updated_stock_quantity = 0
+						updated_USD_quantity = current_USD_in_wallet + (current_stock_in_wallet * price)
+
+						# Delete user-stock record from database
+						sql7 = 'DELETE FROM Portfolios WHERE Username=? AND Symbol=?'
+						args7 = (user, symbol)
+						common.db_helper.db_execute(sql7, args7)
+
 						port_node = Portfolio_Node.nodes.get(uid=user, symbol=symbol)
-						port_node.quantity += quantity
+						user_node = User_Node.nodes.get(uid=user)
+						stock_node = Stock_Node.nodes.get(symbol=symbol)
+						port_node.delete()
+						user_node.stock.disconnect(stock_node)
+
+
+					else:
+						updated_USD_quantity = current_USD_in_wallet + order_cost
+						port_node = Portfolio_Node.nodes.get(uid=user, symbol=symbol)
+						port_node.quantity -= abs(quantity)
 						port_node.save()
 
-					# Update transaction history
-					sql7 = 'INSERT INTO TradingHistory (TimePurchased, AskingPrice, Quantity, User, Symbol, BuySell, OpenOrder) VALUES (?,?,?,?,?,?,?)'
-					args7 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,quantity,user,symbol,'B', 0)
-					common.db_helper.db_execute(sql7, args7)
-					
-					trans_node = Transaction_Node(price=price, buy=True, quantity=quantity,date=date.today()).save()
+					context['user_capital'] = updated_USD_quantity
+
+					sql8 = 'INSERT INTO TradingHistory (TimePurchased, AskingPrice, Quantity, User, Symbol, BuySell, OpenOrder) VALUES (?,?,?,?,?,?,?)'
+					args8 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,abs(quantity),user,symbol,'S', 0)
+					common.db_helper.db_execute(sql8, args8)
+
+					trans_node = Transaction_Node(price=price, buy=False, quantity=abs(quantity), date=date.today()).save()
 					user_node = User_Node.nodes.get(uid=user)
 					stock_node = Stock_Node.nodes.get(symbol=symbol)
 					user_node.transaction.connect(trans_node)
 					trans_node.stock.connect(stock_node)
 
-					#print(time.strftime('%Y-%m-%d %H:%M:%S') + " " + str(price) + " " + str(quantity) + " "  + user)
-			elif self.request.get_full_path().split("&")[2] == 'sell=':
-				quantity *= -1
-				# sell order
-				if current_stock_in_wallet <= abs(quantity):
-					# If user asks to sell more than he has, sell only his remaining stock.
-					# Since quantity will reach 0, delete existing user-stock record
-					updated_stock_quantity = 0
-					updated_USD_quantity = current_USD_in_wallet + (current_stock_in_wallet * price)
-
-					# Delete user-stock record from database
-					sql7 = 'DELETE FROM Portfolios WHERE Username=? AND Symbol=?'
-					args7 = (user, symbol)
-					common.db_helper.db_execute(sql7, args7)
-
-					port_node = Portfolio_Node.nodes.get(uid=user, symbol=symbol)
-					user_node = User_Node.nodes.get(uid=user)
-					stock_node = Stock_Node.nodes.get(symbol=symbol)
-					port_node.delete()
-					user_node.stock.disconnect(stock_node)
 
 
-				else:
-					updated_USD_quantity = current_USD_in_wallet + order_cost
-					port_node = Portfolio_Node.nodes.get(uid=user, symbol=symbol)
-					port_node.quantity -= abs(quantity)
-					port_node.save()
+					# Since quantity is currently just negative for sell orders, we will add quantity
 
-				context['user_capital'] = updated_USD_quantity
+					# Update with decreased stock quantity
+					sql4 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
+					updated_stock_quantity = current_stock_in_wallet + quantity
+					args4 = (updated_stock_quantity, user, symbol)
+					common.db_helper.db_execute(sql4, args4)
+					
 
-				sql8 = 'INSERT INTO TradingHistory (TimePurchased, AskingPrice, Quantity, User, Symbol, BuySell, OpenOrder) VALUES (?,?,?,?,?,?,?)'
-				args8 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,abs(quantity),user,symbol,'S', 0)
-				common.db_helper.db_execute(sql8, args8)
-
-				trans_node = Transaction_Node(price=price, buy=False, quantity=abs(quantity), date=date.today()).save()
-				user_node = User_Node.nodes.get(uid=user)
-				stock_node = Stock_Node.nodes.get(symbol=symbol)
-				user_node.transaction.connect(trans_node)
-				trans_node.stock.connect(stock_node)
-
-
-
-				# Since quantity is currently just negative for sell orders, we will add quantity
-
-				# Update with decreased stock quantity
-				sql4 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
-				updated_stock_quantity = current_stock_in_wallet + quantity
-				args4 = (updated_stock_quantity, user, symbol)
-				common.db_helper.db_execute(sql4, args4)
-				
-
-				# Update with increased USD quantity
-				sql5 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
-				args5 = (updated_USD_quantity, user, "USD")
-				common.db_helper.db_execute(sql5, args5)
+					# Update with increased USD quantity
+					sql5 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
+					args5 = (updated_USD_quantity, user, "USD")
+					common.db_helper.db_execute(sql5, args5)
 
 			#update neo4j portfolio profit
 			sell = 0.0
