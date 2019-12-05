@@ -151,7 +151,6 @@ class IndexPageView(TemplateView, FormView):
 					# limit buy order
 
 					# checking if the available USD quantity the user has is sufficient for order quantity
-        			# updating Portfolios with subtracted USD of buy order (could be turned into a trigger)
         			# finally, inserting open buy order to TradingHistory
 					# CREATE TABLE TradingHistory (
 					#     TimePurchased DATE NOT NULL,
@@ -173,6 +172,8 @@ class IndexPageView(TemplateView, FormView):
 						sql_create_open_order = 'INSERT INTO TradingHistory VALUES (?,?,?,?,?,?,?)'
 						args_create_open_order = (time.strftime('%Y-%m-%d %H:%M:%S'), user, symbol, orderprice, quantity, 'B', 1)
 						common.db_helper.db_execute(sql_create_open_order, args_create_open_order)
+						updated_USD_quantity = current_USD_in_wallet - order_cost
+						context['user_capital'] = updated_USD_quantity
 
 				else:
 
@@ -235,7 +236,11 @@ class IndexPageView(TemplateView, FormView):
 
 				result = re.search('orderprice=(\\d+)', self.request.get_full_path())
 
-				if result: 
+				if result:
+					# is limit sell order
+					  
+					print("in limit buy order statement")
+
 					orderprice = int(result[1])
 					order_cost = quantity * orderprice
 
@@ -250,6 +255,7 @@ class IndexPageView(TemplateView, FormView):
 						sql_create_open_order = 'INSERT INTO TradingHistory VALUES (?,?,?,?,?,?,?)'
 						args_create_open_order = (time.strftime('%Y-%m-%d %H:%M:%S'), user, symbol, orderprice, quantity, 'S', 1)
 						common.db_helper.db_execute(sql_create_open_order, args_create_open_order)
+
 				else:		
 					# is market sell order
 					quantity *= -1
@@ -348,7 +354,17 @@ class IndexPageView(TemplateView, FormView):
 				selldate = db.cypher_query(neo4j_selldate_query)
 				neo4j_buydate_query = "MATCH (s:Stock_Node)<-[:TRANSACTIONTOSTOCK]-(ts:Transaction_Node)<-[:PERFORMS]-(betterTrader:User_Node) WHERE ts.buy = true AND s.symbol = '{stocksymbol}' AND betterTrader.uid='{username}' WITH min(ts.price) as minbuy MATCH (s:Stock_Node)<-[:TRANSACTIONTOSTOCK]-(ts:Transaction_Node)<-[:PERFORMS]-(betterTrader:User_Node) WHERE ts.price = minbuy AND ts.buy = true AND s.symbol = '{stocksymbol}' AND betterTrader.uid='{username}' RETURN ts.date, ts.tid".format(stocksymbol=symbol, username=uid)
 				buydate = db.cypher_query(neo4j_buydate_query)
-				tup = (idx, uid, selldate[0][0][0], buydate[0][0][0])
+				sell = ''
+				buy = ''
+				if len(selldate[0]) == 0:
+					sell = 'Has not sold shares'
+				else:
+					sell = selldate[0][0][0]
+				if len(buydate[0]) == 0:
+					buy = 'Has not bought shares'
+				else:
+					buy = buydate[0][0][0]
+				tup = (idx, uid, sell, buy)
 				idx+=1
 				tup_list.append(tup)
 				print("the list", tup_list)
