@@ -68,13 +68,6 @@ class IndexPageView(TemplateView, FormView):
 		sql_stocks = 'SELECT Symbol FROM Portfolios WHERE Symbol <> "USD" AND Username =? '
 		args_stocks = (user,)
 		recordstocks = common.db_helper.db_query(sql_stocks, args_stocks)
-		sql_user_wallet = 'SELECT Quantity FROM Portfolios WHERE Username=? AND Symbol=?'
-		args_user_wallet = (user, 'USD')
-		record2 = common.db_helper.db_query(sql_user_wallet, args_user_wallet)
-		user_wallet = 0
-		if record2:
-			user_wallet = record2[0]['Quantity']
-		context['user_capital'] = user_wallet
 
 		#print(type(recordstocks))
 		#print("userstocks:")
@@ -385,6 +378,12 @@ class IndexPageView(TemplateView, FormView):
 		open_orders = [(row['rowid'], row['Symbol'],row['AskingPrice'] ,int(row['Quantity']), row['BuySell']) for row in open_orders_query]
 		print("OPEN ORDERS", open_orders)
 		context['open_orders'] = open_orders
+		sql_user_wallet = 'SELECT Quantity FROM Portfolios WHERE Username=? AND Symbol=?'
+		args_user_wallet = (user, 'USD')
+		record2 = common.db_helper.db_query(sql_user_wallet, args_user_wallet)
+		user_wallet = 0
+		if record2:
+			user_wallet = record2[0]['Quantity']
 		context['user_capital'] = user_wallet
 
 		return context
