@@ -36,7 +36,25 @@ class BuySellForm(forms.Form):
     stockdata = forms.CharField(label = _('StockName'), strip=False, max_length=500)
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+       #self.kwargs = {'initial': {}, 'prefix': None}
+       super().__init__(*args, **kwargs)
+
+    #self.fields['stockdata'].initial = (kwargs['name']) # or whatever you want the initial value to be
+    
+
+    def get_buy_volume(self):
+        return self.cleaned_data['buysellvolume']
+
+class LimitForm(forms.Form):
+    buysellvolume = forms.CharField(label = _('Buy/Sell Volume'), strip=False, max_length=500)
+    stockdata = forms.CharField(label = _('StockName'), strip=False, max_length=500)
+    orderprice = forms.IntegerField(label = _('OrderPrice'))
+
+    def __init__(self, *args, **kwargs):
+       #self.kwargs = {'initial': {}, 'prefix': None}
+       super().__init__(*args, **kwargs)
+
+    #self.fields['stockdata'].initial = (kwargs['name']) # or whatever you want the initial value to be
     
 
     def get_buy_volume(self):

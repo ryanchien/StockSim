@@ -18,10 +18,11 @@ import common.db_helper
 from common.neo4j import User_Node, Transaction_Node, Portfolio_Node, Stock_Node
 
 import time
-from datetime import date, timedelta, datetime
+import re
+from datetime import date, timedelta
 
 from django.views.generic import View, FormView
-from .forms import StocksForm, BuySellForm
+from .forms import StocksForm, BuySellForm, LimitForm
 from django.shortcuts import get_object_or_404, redirect
 #last_symbol = ""
 
@@ -30,6 +31,7 @@ from neomodel import config, db
 config.DATABASE_URL = 'bolt://test:test@localhost:7687'  # default
 
 class IndexPageView(TemplateView, FormView):
+	
 	template_name = 'main/index.html'
 
 
@@ -39,6 +41,15 @@ class IndexPageView(TemplateView, FormView):
 		url = self.request.get_full_path()
 		if url == '/':
 			return StocksForm
+
+		if('Limit+Order' in self.request.get_full_path()):
+			return LimitForm
+
+		elif('stockdata=' in self.request.get_full_path() or '?tvwidgetsymbol=' in self.request.get_full_path()):
+			print("fewo iqfer uweoiu")
+			return BuySellForm
+		
+
 		else:	
 			return BuySellForm
 
@@ -46,20 +57,39 @@ class IndexPageView(TemplateView, FormView):
 	def get_context_data(self, **kwargs):
 		context = super().get_context_data(**kwargs)
 		url = self.request.get_full_path()
+		
+		if('Limit+Order' in url):
+			print("THIS IS LIMIT ORDER")
+			context['ord_type'] = 'Limit'
+		else:
+			print("THIS IS MARKET ORDER")
+			context['ord_type'] = 'Market'
 		# user = user.request.username
 		# For now enter the username manually. This will be different for everyone
 		user = self.request.user.username
 		#print(user)
-		sqlstocks = 'SELECT * FROM Portfolios WHERE Symbol <> "USD"; '
-		argsstocks = (user,)
-		recordstocks = common.db_helper.db_query(sqlstocks)
+		sql_stocks = 'SELECT Symbol FROM Portfolios WHERE Symbol <> "USD" AND Username =? '
+		args_stocks = (user,)
+		recordstocks = common.db_helper.db_query(sql_stocks, args_stocks)
 		sql_user_wallet = 'SELECT Quantity FROM Portfolios WHERE Username=? AND Symbol=?'
-		args2 = (user, 'USD')
-		record2 = common.db_helper.db_query(sql_user_wallet, args2)
+		args_user_wallet = (user, 'USD')
+		record2 = common.db_helper.db_query(sql_user_wallet, args_user_wallet)
 		user_wallet = 0
 		if record2:
 			user_wallet = record2[0]['Quantity']
 		context['user_capital'] = user_wallet
+		stock_quant_sql = 'SELECT Symbol, Quantity FROM Portfolios WHERE Symbol <> "USD" AND Username =? '
+		argsstocks = (user,)
+		stock_quantities_query = common.db_helper.db_query(stock_quant_sql, argsstocks)
+		stock_quantities = [(d['Symbol'], int(d['Quantity'])) for d in stock_quantities_query]
+		context['stock_quantity'] = stock_quantities
+
+		sql_open_orders = 'SELECT rowid, Symbol, Quantity, BuySell FROM TradingHistory WHERE User =? AND OpenOrder = 1'
+		args_open_orders = (user,)
+		open_orders_query = common.db_helper.db_query(sql_open_orders, args_open_orders)
+		open_orders = [(row['rowid'], row['Symbol'], int(row['Quantity']), row['BuySell']) for row in open_orders_query]
+		context['open_orders'] = open_orders
+
 		#print(type(recordstocks))
 		#print("userstocks:")
 		txt = ""
@@ -82,8 +112,8 @@ class IndexPageView(TemplateView, FormView):
 			context['symbol'] = temp
 
 
-		elif '?stockdata=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
-			temp = (url.split('?stockdata=')[1])
+		elif 'stockdata=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
+			temp = (url.split('stockdata=')[1])
 			context['symbol'] = temp
 
 
@@ -113,10 +143,16 @@ class IndexPageView(TemplateView, FormView):
 
 
 			#last_symbol = url.split('?stockdata=')[1]
-		elif '&stockdata=' in self.request.get_full_path() and '?buysellvolume=' in self.request.get_full_path():
+		elif 'cancelOrder' in self.request.get_full_path():
+			order_id =  (re.search('cancelOrder(.*)=cancel', self.request.get_full_path()).group(1))
+			sql_cancel = 'DELETE FROM TradingHistory WHERE rowid=?'
+			args_cancel = (order_id,)
+			common.db_helper.db_execute(sql_cancel, args_cancel)
+
+		elif 'stockdata=' in self.request.get_full_path() and '?buysellvolume=' in self.request.get_full_path():
 			temp = url.split('?buysellvolume=')
 			quantity = int((temp[1])[: temp[1].find('&')])
-			temp = (url.split('&stockdata='))[1]
+			temp = (url.split('stockdata='))[1]
 			symbol = temp[ : temp.find('&')]
 			#print(symbol)
 			
@@ -191,8 +227,8 @@ class IndexPageView(TemplateView, FormView):
 						port_node.save()
 
 					# Update transaction history
-					sql7 = 'INSERT INTO TradingHistory (TimePurchased, Price, Quantity, User, Symbol, BuySell, LimitOpen) VALUES (?,?,?,?,?,?,?)'
-					args7 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,quantity,user,symbol,'B', 'Closed')
+					sql7 = 'INSERT INTO TradingHistory (TimePurchased, AskingPrice, Quantity, User, Symbol, BuySell, OpenOrder) VALUES (?,?,?,?,?,?,?)'
+					args7 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,quantity,user,symbol,'B', 0)
 					common.db_helper.db_execute(sql7, args7)
 					
 					trans_node = Transaction_Node(price=price, buy=True, quantity=quantity,date=date.today()).save()
@@ -229,9 +265,10 @@ class IndexPageView(TemplateView, FormView):
 					port_node.quantity -= abs(quantity)
 					port_node.save()
 
+				context['user_capital'] = updated_USD_quantity
 
-				sql8 = 'INSERT INTO TradingHistory (TimePurchased, Price, Quantity, User, Symbol, BuySell, LimitOpen) VALUES (?,?,?,?,?,?,?)'
-				args8 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,abs(quantity),user,symbol,'S', 'Closed')
+				sql8 = 'INSERT INTO TradingHistory (TimePurchased, AskingPrice, Quantity, User, Symbol, BuySell, OpenOrder) VALUES (?,?,?,?,?,?,?)'
+				args8 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,abs(quantity),user,symbol,'S', 0)
 				common.db_helper.db_execute(sql8, args8)
 
 				trans_node = Transaction_Node(price=price, buy=False, quantity=abs(quantity), date=date.today()).save()
@@ -288,12 +325,13 @@ class IndexPageView(TemplateView, FormView):
 			url = self.request.get_full_path()
 			temp = url.split('?buysellvolume=')
 			context['volume'] = (temp[1])[: temp[1].find('&')]
-			temp = (url.split('&stockdata='))[1]
+			temp = (url.split('stockdata='))[1]
 			#print(temp)
 			context['symbol'] = temp[ : temp.find('&')]
 		return context
 
 
+    #return render(request, 'new/click.html',{'value':'Button clicked'})
 	
 
 

@@ -1,9 +1,52 @@
 {% extends 'layouts/default/page.html' %} {% load i18n %} {% block content %} {% if request.user.is_authenticated %} {% trans 'Your username is' %} <b>{{ request.user.username }}</b>. {% else %} {% trans 'You are a guest.' %} {% endif %}
 
-  
+<style>
+btn-group-xs > .btn, .btn-xs {
+  padding: .25rem .4rem;
+  font-size: .875rem;
+  line-height: .5;
+  border-radius: .2rem;
+}
+
+</style>
 <p style = "color: rgb(78, 109, 136)"> WORLD TRADING DATA </p>
   
- <p style = "color:rgb(78, 109, 136)">YOUR CAPITAL : {{user_capital}}</p>
+ <p style = "color:rgb(78, 109, 136); display:inline">YOUR CAPITAL : {{user_capital}}</p>
+
+ 
+ 
+ {% if symbol != ""  and ord_type == 'Market' %}
+
+ <div class="btn-group" style = "margin-left:120px;  display:inline">
+  <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Market Order
+  </button>
+  <div class="dropdown-menu">
+      <form method="get">
+    <input class="dropdown-item" type="submit" name = "limitorder" value = "Limit Order" >
+    <input type="hidden" name="stockdata" value="{{symbol}}" />
+    </form>
+  </div>
+</div>
+  {% endif %}
+  
+  
+  {% if symbol != ""  and ord_type == 'Limit' %}
+<div class="btn-group" style = "margin-left:120px;  display:inline">
+    <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Limit Order
+    </button>
+    <div class="dropdown-menu">
+        <form method="get">
+      <input class="dropdown-item" type="submit" name = "limitorder" value = "Market Order" >
+      <input type="hidden" name="stockdata" value="{{symbol}}" />
+
+      </form>
+    </div>
+  </div>
+
+  {% endif %}
+
 
 
     <form method="get" id=1>
@@ -15,14 +58,61 @@
       <button type="submit" name = "sell">sell</button>
       {% endif %}
     </form>
-<!--
-    {% if symbol != "" %}
-      <input method = "get" type="save" name="BuyField" value="0">
-      <input method = "get" type="submit" name="BuyButton" value="Buy">
-      <input method = "get" type="save" name="SellField" value="0">
-      <input method = "get" type="submit" name="SellButton" value="Sell">
-    {% endif %}
--->
+
+
+
+
+    <div class="btn-toolbar">
+
+  
+    <div class="dropdown show">
+        <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style =" margin-right: 10px;">
+          Your Portfolio
+        </a>
+      
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+            <a class="dropdown-item" style = "text-decoration: underline; font-weight: bold;">Stockname  Quantity</a>
+            {% for stock,quant in stock_quantity %}
+            
+              <a class="dropdown-item"   href="http://localhost:8000/?tvwidgetsymbol=NASDAQ:{{stock}}"><div style = "float:left; color:rgb(78, 109, 136);"> {{stock }}</div> <div style = "float:right; color:rgb(78, 109, 136)">{{quant}}</div></a>
+              
+            
+          {% endfor %}
+          
+          
+        </div>
+      </div>
+
+      <div class="dropdown show" >
+        <a class="btn btn-secondary dropdown-toggle"  role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" >
+          Your Orders
+        </a>
+      
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuLink"  >
+            <a class="dropdown-item" style = "font-weight: bold;"><p style = "display:inline; text-decoration:underline;">Stockname</p> <p style = "display:inline; text-decoration:underline;">Quantity</p> <p style = "display:inline; text-decoration:underline;">Amount</p>   </a>
+            {% for rowid,Symbol,Quantity,BuySell in open_orders %}
+            
+              <a class="dropdown-item"  style = "color:rgb(78, 109, 136); "  > <div style = "margin-right: 50px; display:inline-block"> {{Symbol}} </div> <div style = "margin-right: 50px; display:inline-block">{{Quantity}}&nbsp; &nbsp; &nbsp;  &nbsp;&nbsp; &nbsp; &nbsp;  
+                {% if  BuySell == 'B' %}
+                 Buy
+                {% else %}
+                Sell
+                {% endif %}
+                &nbsp;&nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp; 
+                <form action = "#" method = "get">  
+                    <input type="submit" class="btn btn-primary"  value="cancel" name="cancelOrder{{rowid}}" style = "float:right;margin-top:-20px; background-color:rgb(204, 0, 0); " name = "print-btn">                
+                
+                </form></div> </a>
+              
+            
+          {% endfor %}
+          
+          
+        </div>
+      </div>
+
+    </div>
+
 
         <!-- TradingView Widget BEGIN -->
 <!-- TradingView Widget BEGIN -->
