@@ -381,7 +381,17 @@ class IndexPageView(TemplateView, FormView):
 				selldate = db.cypher_query(neo4j_selldate_query)
 				neo4j_buydate_query = "MATCH (s:Stock_Node)<-[:TRANSACTIONTOSTOCK]-(ts:Transaction_Node)<-[:PERFORMS]-(betterTrader:User_Node) WHERE ts.buy = true AND s.symbol = '{stocksymbol}' AND betterTrader.uid='{username}' WITH min(ts.price) as minbuy MATCH (s:Stock_Node)<-[:TRANSACTIONTOSTOCK]-(ts:Transaction_Node)<-[:PERFORMS]-(betterTrader:User_Node) WHERE ts.price = minbuy AND ts.buy = true AND s.symbol = '{stocksymbol}' AND betterTrader.uid='{username}' RETURN ts.date, ts.tid".format(stocksymbol=symbol, username=uid)
 				buydate = db.cypher_query(neo4j_buydate_query)
-				tup = (idx, uid, selldate[0][0][0], buydate[0][0][0])
+				sell = ''
+				buy = ''
+				if len(selldate[0]) == 0:
+					sell = 'Has not sold shares'
+				else:
+					sell = selldate[0][0][0]
+				if len(buydate[0]) == 0:
+					buy = 'Has not bought shares'
+				else:
+					buy = buydate[0][0][0]
+				tup = (idx, uid, sell, buy)
 				idx+=1
 				tup_list.append(tup)
 				print("the list", tup_list)
