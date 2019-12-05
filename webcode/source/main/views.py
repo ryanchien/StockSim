@@ -198,6 +198,8 @@ class IndexPageView(TemplateView, FormView):
 						sql_create_open_order = 'INSERT INTO TradingHistory VALUES (?,?,?,?,?,?,?)'
 						args_create_open_order = (time.strftime('%Y-%m-%d %H:%M:%S'), user, symbol, orderprice, quantity, 'B', 1)
 						common.db_helper.db_execute(sql_create_open_order, args_create_open_order)
+						updated_USD_quantity = current_USD_in_wallet - order_cost
+						context['user_capital'] = updated_USD_quantity
 
 				else:
 
@@ -280,6 +282,7 @@ class IndexPageView(TemplateView, FormView):
 						sql_create_open_order = 'INSERT INTO TradingHistory VALUES (?,?,?,?,?,?,?)'
 						args_create_open_order = (time.strftime('%Y-%m-%d %H:%M:%S'), user, symbol, orderprice, quantity, 'S', 1)
 						common.db_helper.db_execute(sql_create_open_order, args_create_open_order)
+
 				else:		
 					# is market sell order
 					quantity *= -1
