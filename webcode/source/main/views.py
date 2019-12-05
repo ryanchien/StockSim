@@ -319,7 +319,7 @@ class IndexPageView(TemplateView, FormView):
 				tup_list.append(tup)
 				print("the list", tup_list)
 			
-			context['better_orders']
+			context['better_orders'] = tup_list
 			url = self.request.get_full_path()
 			temp = url.split('?buysellvolume=')
 			context['volume'] = (temp[1])[: temp[1].find('&')]

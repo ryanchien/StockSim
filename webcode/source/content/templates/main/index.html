@@ -282,18 +282,18 @@ width: 50%">
     <thead>
       <tr>
         <th scope="col">#</th>
-        <th scope="col">First</th>
-        <th scope="col">Last</th>
-        <th scope="col">Handle</th>
+        <th scope="col">User</th>
+        <th scope="col">Best Sell Date</th>
+        <th scope="col">Best Buy Date</th>
       </tr>
     </thead>
     <tbody>
       {% for id, uid, selldate, buydate in better_orders %}
       <tr>
-        <th scope="row">id</th>
-        <td>uid</td>
-        <td>selldate</td>
-        <td>buydate</td>
+        <th scope="row">{{id}}</th>
+        <td>{{uid}}</td>
+        <td>{{selldate}}</td>
+        <td>{{buydate}}</td>
       </tr>
       {% endfor %}
     </tbody>
