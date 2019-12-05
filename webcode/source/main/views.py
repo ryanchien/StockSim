@@ -58,10 +58,8 @@ class IndexPageView(TemplateView, FormView):
 		url = self.request.get_full_path()
 		
 		if('Limit+Order' in url):
-			print("THIS IS LIMIT ORDER")
 			context['ord_type'] = 'Limit'
 		else:
-			print("THIS IS MARKET ORDER")
 			context['ord_type'] = 'Market'
 		# user = user.request.username
 		# For now enter the username manually. This will be different for everyone
@@ -77,12 +75,6 @@ class IndexPageView(TemplateView, FormView):
 		if record2:
 			user_wallet = record2[0]['Quantity']
 		context['user_capital'] = user_wallet
-
-		sql_open_orders = 'SELECT rowid, Symbol, Quantity, BuySell FROM TradingHistory WHERE User =? AND OpenOrder = 1'
-		args_open_orders = (user,)
-		open_orders_query = common.db_helper.db_query(sql_open_orders, args_open_orders)
-		open_orders = [(row['rowid'], row['Symbol'], int(row['Quantity']), row['BuySell']) for row in open_orders_query]
-		context['open_orders'] = open_orders
 
 		#print(type(recordstocks))
 		#print("userstocks:")
@@ -109,31 +101,6 @@ class IndexPageView(TemplateView, FormView):
 		elif 'stockdata=' in self.request.get_full_path() and '?buysellvolume=' not in self.request.get_full_path():
 			temp = (url.split('stockdata=')[1])
 			context['symbol'] = temp
-
-
-			'''
-			days_before = (date.today()-timedelta(days=7)).isoformat()
-			#print(days_before)
-			par = {'symbol':temp, 'api_token':'svaMvA7fFajd6B3EBsfrLZL6lCfmqLl6vJgCbGPBisqN74QPzH3kF49JDqR4','date_from':days_before, 'date_to':days_before}
-			response = requests.get(url = 'https://api.worldtradingdata.com/api/v1/history', params = par)
-			stock = response.json() if response and response.status_code == 200 else None
-			par2 = {'symbol':temp, 'api_token':'svaMvA7fFajd6B3EBsfrLZL6lCfmqLl6vJgCbGPBisqN74QPzH3kF49JDqR4'}
-			response2 = requests.get(url = 'https://api.worldtradingdata.com/api/v1/stock', params = par)
-			stock2 = response2.json() if response2 and response2.status_code == 200 else None
-			#print(stock2)
-			prev_high = float(stock['history'][days_before]['high'])
-			prev_low = float(stock['history'][days_before]['low'])
-			curr_price = float(stock2['data'][0]['price'])
-			prev_avg = (prev_high + prev_low)/2.0
-			perc_diff = curr_price/prev_avg
-			'''
-			'''
-			@TODO
-			check transaction history table
-			'''
-			#sql = 'CREATE TRIGGER limit_order AFTER UPDATE OF Value ON Stocks BEGIN UPDATE Portfolios SET WHERE END;'
-			#args = (symbol,)
-			#record = common.db_helper.db_query(sql, args)
 
 
 			#last_symbol = url.split('?stockdata=')[1]
@@ -195,7 +162,6 @@ class IndexPageView(TemplateView, FormView):
 					#     BuySell Char(1),
 					#     OpenOrder INT(1)
 					# );    
-					print("in limit buy order statement")
 
 					orderprice = int(result[1])
 					order_cost = quantity * orderprice
@@ -210,7 +176,6 @@ class IndexPageView(TemplateView, FormView):
 
 				else:
 
-					print("in market buy order statement")
 					# market buy order
 					if current_USD_in_wallet >= order_cost:
 						if current_stock_in_wallet == 0:
@@ -270,23 +235,7 @@ class IndexPageView(TemplateView, FormView):
 
 				result = re.search('orderprice=(\\d+)', self.request.get_full_path())
 
-				if result:
-					# is limit sell order
-
-					# checking if the available USD quantity the user has is sufficient for order quantity
-        			# updating Portfolios with subtracted USD of buy order (could be turned into a trigger)
-        			# finally, inserting open buy order to TradingHistory
-					# CREATE TABLE TradingHistory (
-					#     TimePurchased DATE NOT NULL,
-					#     User TEXT NOT NULL,
-					#     Symbol TEXT NOT NULL,
-					#     AskingPrice FLOAT NOT NULL,
-					#     Quantity INTEGER NOT NULL,
-					#     BuySell Char(1),
-					#     OpenOrder INT(1)
-					# );    
-					print("in limit buy order statement")
-
+				if result: 
 					orderprice = int(result[1])
 					order_cost = quantity * orderprice
 
@@ -403,19 +352,25 @@ class IndexPageView(TemplateView, FormView):
 				idx+=1
 				tup_list.append(tup)
 				print("the list", tup_list)
-			
-			context['better_orders'] = tup_list
+				context['better_orders'] = tup_list
 			url = self.request.get_full_path()
 			temp = url.split('?buysellvolume=')
 			context['volume'] = (temp[1])[: temp[1].find('&')]
 			temp = (url.split('stockdata='))[1]
-			#print(temp)
 			context['symbol'] = temp[ : temp.find('&')]
-			stock_quant_sql = 'SELECT Symbol, Quantity FROM Portfolios WHERE Symbol <> "USD" AND Username =? '
-			argsstocks = (user,)
-			stock_quantities_query = common.db_helper.db_query(stock_quant_sql, argsstocks)
-			stock_quantities = [(d['Symbol'], int(d['Quantity'])) for d in stock_quantities_query]
-			context['stock_quantity'] = stock_quantities
+		stock_quant_sql = 'SELECT Symbol, Quantity FROM Portfolios WHERE Symbol <> "USD" AND Username =? '
+		argsstocks = (user,)
+		stock_quantities_query = common.db_helper.db_query(stock_quant_sql, argsstocks)
+		stock_quantities = [(d['Symbol'], int(d['Quantity'])) for d in stock_quantities_query]
+		context['stock_quantity'] = stock_quantities
+		sql_open_orders = 'SELECT rowid, Symbol, Quantity, BuySell FROM TradingHistory WHERE User =? AND OpenOrder = 1'
+		args_open_orders = (user,)
+		open_orders_query = common.db_helper.db_query(sql_open_orders, args_open_orders)
+		open_orders = [(row['rowid'], row['Symbol'], int(row['Quantity']), row['BuySell']) for row in open_orders_query]
+		print("OPEN ORDERS", open_orders)
+		context['open_orders'] = open_orders
+		context['user_capital'] = user_wallet
+
 		return context
 
 
