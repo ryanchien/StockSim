@@ -224,8 +224,8 @@ class IndexPageView(TemplateView, FormView):
 					updated_USD_quantity = current_USD_in_wallet + order_cost
 				context['user_capital'] = updated_USD_quantity
 
-				sql8 = 'INSERT INTO TradingHistory (TimePurchased, Price, Quantity, User, Symbol, BuySell, LimitOpen) VALUES (?,?,?,?,?,?,?)'
-				args8 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,abs(quantity),user,symbol,'S', 'Closed')
+				sql8 = 'INSERT INTO TradingHistory (TimePurchased, AskingPrice, Quantity, User, Symbol, BuySell, OpenOrder) VALUES (?,?,?,?,?,?,?)'
+				args8 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,abs(quantity),user,symbol,'S', 0)
 				common.db_helper.db_execute(sql8, args8)
 
 
