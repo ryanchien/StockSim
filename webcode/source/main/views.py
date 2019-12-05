@@ -46,7 +46,6 @@ class IndexPageView(TemplateView, FormView):
 			return LimitForm
 
 		elif('stockdata=' in self.request.get_full_path() or '?tvwidgetsymbol=' in self.request.get_full_path()):
-			print("fewo iqfer uweoiu")
 			return BuySellForm
 		
 
@@ -78,11 +77,6 @@ class IndexPageView(TemplateView, FormView):
 		if record2:
 			user_wallet = record2[0]['Quantity']
 		context['user_capital'] = user_wallet
-		stock_quant_sql = 'SELECT Symbol, Quantity FROM Portfolios WHERE Symbol <> "USD" AND Username =? '
-		argsstocks = (user,)
-		stock_quantities_query = common.db_helper.db_query(stock_quant_sql, argsstocks)
-		stock_quantities = [(d['Symbol'], int(d['Quantity'])) for d in stock_quantities_query]
-		context['stock_quantity'] = stock_quantities
 
 		sql_open_orders = 'SELECT rowid, Symbol, Quantity, BuySell FROM TradingHistory WHERE User =? AND OpenOrder = 1'
 		args_open_orders = (user,)
@@ -328,6 +322,11 @@ class IndexPageView(TemplateView, FormView):
 			temp = (url.split('stockdata='))[1]
 			#print(temp)
 			context['symbol'] = temp[ : temp.find('&')]
+			stock_quant_sql = 'SELECT Symbol, Quantity FROM Portfolios WHERE Symbol <> "USD" AND Username =? '
+			argsstocks = (user,)
+			stock_quantities_query = common.db_helper.db_query(stock_quant_sql, argsstocks)
+			stock_quantities = [(d['Symbol'], int(d['Quantity'])) for d in stock_quantities_query]
+			context['stock_quantity'] = stock_quantities
 		return context
 
 
