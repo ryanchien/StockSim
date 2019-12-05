@@ -184,17 +184,8 @@ class IndexPageView(TemplateView, FormView):
 					# limit buy order
 
 					# checking if the available USD quantity the user has is sufficient for order quantity
-        			# updating Portfolios with subtracted USD of buy order (could be turned into a trigger)
         			# finally, inserting open buy order to TradingHistory
-					# CREATE TABLE TradingHistory (
-					#     TimePurchased DATE NOT NULL,
-					#     User TEXT NOT NULL,
-					#     Symbol TEXT NOT NULL,
-					#     AskingPrice FLOAT NOT NULL,
-					#     Quantity INTEGER NOT NULL,
-					#     BuySell Char(1),
-					#     OpenOrder INT(1)
-					# );    
+
 					print("in limit buy order statement")
 
 					orderprice = int(result[1])
@@ -272,19 +263,7 @@ class IndexPageView(TemplateView, FormView):
 
 				if result:
 					# is limit sell order
-
-					# checking if the available USD quantity the user has is sufficient for order quantity
-        			# updating Portfolios with subtracted USD of buy order (could be turned into a trigger)
-        			# finally, inserting open buy order to TradingHistory
-					# CREATE TABLE TradingHistory (
-					#     TimePurchased DATE NOT NULL,
-					#     User TEXT NOT NULL,
-					#     Symbol TEXT NOT NULL,
-					#     AskingPrice FLOAT NOT NULL,
-					#     Quantity INTEGER NOT NULL,
-					#     BuySell Char(1),
-					#     OpenOrder INT(1)
-					# );    
+					  
 					print("in limit buy order statement")
 
 					orderprice = int(result[1])
