@@ -48,7 +48,7 @@ class BuySellForm(forms.Form):
 class LimitForm(forms.Form):
     buysellvolume = forms.CharField(label = _('Buy/Sell Volume'), strip=False, max_length=500)
     stockdata = forms.CharField(label = _('StockName'), strip=False, max_length=500)
-    orderprice = forms.IntegerField(label = _('OrderPrice'))
+    orderprice = forms.FloatField(label = _('OrderPrice'))
 
     def __init__(self, *args, **kwargs):
        #self.kwargs = {'initial': {}, 'prefix': None}

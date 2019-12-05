@@ -138,7 +138,8 @@ class IndexPageView(TemplateView, FormView):
 			# Begin applying order to user's portfolio...
 			if re.search('buy=', self.request.get_full_path()):
 
-				result = re.search('orderprice=(\\d+)', self.request.get_full_path())
+				result = re.search('orderprice=(\\d+\\.\\d+)', self.request.get_full_path())
+				print("RES = " + str(result))
 
 				if result:
 					# limit buy order
@@ -155,7 +156,7 @@ class IndexPageView(TemplateView, FormView):
 					#     OpenOrder INT(1)
 					# );    
 
-					orderprice = int(result[1])
+					orderprice = float(result[1])
 					order_cost = quantity * orderprice
 
 					if current_USD_in_wallet >= order_cost:
@@ -227,14 +228,14 @@ class IndexPageView(TemplateView, FormView):
 						#print(time.strftime('%Y-%m-%d %H:%M:%S') + " " + str(price) + " " + str(quantity) + " "  + user)
 			elif re.search('sell=', self.request.get_full_path()):
 
-				result = re.search('orderprice=(\\d+)', self.request.get_full_path())
+				result = re.search('orderprice=(\\d+\\.\\d+)', self.request.get_full_path())
 
 				if result:
 					# is limit sell order
 					  
 					print("in limit buy order statement")
 
-					orderprice = int(result[1])
+					orderprice = float(result[1])
 					order_cost = quantity * orderprice
 
 					if current_stock_in_wallet >= quantity:
