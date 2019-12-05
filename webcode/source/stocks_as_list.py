@@ -8,7 +8,7 @@ import json
 
 if __name__ == "__main__":
 	
-	N = 8
+	N = 20
 
 	filepath = 'nasdaq100list.txt'
 	pattern = re.compile('\S*')
