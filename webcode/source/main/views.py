@@ -15,14 +15,19 @@ from django.conf import settings
 import requests
 from django.urls import reverse
 import common.db_helper
+from common.neo4j import User_Node, Transaction_Node, Portfolio_Node, Stock_Node
+
 import time
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 
 from django.views.generic import View, FormView
 from .forms import StocksForm, BuySellForm
 from django.shortcuts import get_object_or_404, redirect
-
 #last_symbol = ""
+
+from neomodel import config, db
+
+config.DATABASE_URL = 'bolt://test:test@localhost:7687'  # default
 
 class IndexPageView(TemplateView, FormView):
 	template_name = 'main/index.html'
@@ -163,13 +168,40 @@ class IndexPageView(TemplateView, FormView):
 					common.db_helper.db_execute(sql5, args5)
 					context['user_capital'] = updated_USD_quantity
 
+					# Update neo4j nodes
+					neo4j_query0 = "MATCH (s:Stock_Node) WHERE s.symbol='{stocksymbol}' RETURN s;".format(stocksymbol=symbol)
+					stock_node_list = db.cypher_query(neo4j_query0)
+					if (len(stock_node_list[0])==0):
+						stock_node_list = Stock_Node(symbol=symbol, curr_price=price).save()
+
+					neo4j_query1 = "MATCH (a:User_Node)-[:OWNS]->(s:Stock_Node) WHERE a.uid='{username}' AND s.symbol='{stocksymbol}' WITH a, collect(DISTINCT s.symbol) as listStocks RETURN listStocks;".format(username=user, stocksymbol=symbol)
+					owned_stock_list = db.cypher_query(neo4j_query1)
+					#print(owned_stock_list)
+					if (len(owned_stock_list[0])==0):
+						user_node = User_Node.nodes.get(uid=user)
+						stock_node = Stock_Node.nodes.get(symbol=symbol)
+						user_node.stock.connect(stock_node)
+						port_node = Portfolio_Node(uid=user, symbol=symbol, profit=0.0, quantity=quantity).save()
+						user_node.portfolio.connect(port_node)
+						port_node.stock.connect(stock_node)
+					else:
+						#print("already owns stock")
+						port_node = Portfolio_Node.nodes.get(uid=user, symbol=symbol)
+						port_node.quantity += quantity
+						port_node.save()
 
 					# Update transaction history
 					sql7 = 'INSERT INTO TradingHistory (TimePurchased, Price, Quantity, User, Symbol, BuySell, LimitOpen) VALUES (?,?,?,?,?,?,?)'
 					args7 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,quantity,user,symbol,'B', 'Closed')
 					common.db_helper.db_execute(sql7, args7)
+					
+					trans_node = Transaction_Node(price=price, buy=True, quantity=quantity,date=date.today()).save()
+					user_node = User_Node.nodes.get(uid=user)
+					stock_node = Stock_Node.nodes.get(symbol=symbol)
+					user_node.transaction.connect(trans_node)
+					trans_node.stock.connect(stock_node)
 
-					print(time.strftime('%Y-%m-%d %H:%M:%S') + " " + str(price) + " " + str(quantity) + " "  + user)
+					#print(time.strftime('%Y-%m-%d %H:%M:%S') + " " + str(price) + " " + str(quantity) + " "  + user)
 			elif self.request.get_full_path().split("&")[2] == 'sell=':
 				quantity *= -1
 				# sell order
@@ -183,12 +215,31 @@ class IndexPageView(TemplateView, FormView):
 					sql7 = 'DELETE FROM Portfolios WHERE Username=? AND Symbol=?'
 					args7 = (user, symbol)
 					common.db_helper.db_execute(sql7, args7)
+
+					port_node = Portfolio_Node.nodes.get(uid=user, symbol=symbol)
+					user_node = User_Node.nodes.get(uid=user)
+					stock_node = Stock_Node.nodes.get(symbol=symbol)
+					port_node.delete()
+					user_node.stock.disconnect(stock_node)
+
+
 				else:
 					updated_USD_quantity = current_USD_in_wallet + order_cost
+					port_node = Portfolio_Node.nodes.get(uid=user, symbol=symbol)
+					port_node.quantity -= abs(quantity)
+					port_node.save()
+
 
 				sql8 = 'INSERT INTO TradingHistory (TimePurchased, Price, Quantity, User, Symbol, BuySell, LimitOpen) VALUES (?,?,?,?,?,?,?)'
 				args8 = (time.strftime('%Y-%m-%d %H:%M:%S'),price,abs(quantity),user,symbol,'S', 'Closed')
 				common.db_helper.db_execute(sql8, args8)
+
+				trans_node = Transaction_Node(price=price, buy=False, quantity=abs(quantity), date=date.today()).save()
+				user_node = User_Node.nodes.get(uid=user)
+				stock_node = Stock_Node.nodes.get(symbol=symbol)
+				user_node.transaction.connect(trans_node)
+				trans_node.stock.connect(stock_node)
+
 
 
 				# Since quantity is currently just negative for sell orders, we will add quantity
@@ -198,11 +249,42 @@ class IndexPageView(TemplateView, FormView):
 				updated_stock_quantity = current_stock_in_wallet + quantity
 				args4 = (updated_stock_quantity, user, symbol)
 				common.db_helper.db_execute(sql4, args4)
+				
 
 				# Update with increased USD quantity
 				sql5 = 'UPDATE Portfolios SET Quantity=? WHERE Username=? AND Symbol=?'
 				args5 = (updated_USD_quantity, user, "USD")
 				common.db_helper.db_execute(sql5, args5)
+
+			#update neo4j portfolio profit
+			neo4j_buy_query = "MATCH (a:User_Node)-[:PERFORMS]->(t:Transaction_Node)-[:TRANSACTIONTOSTOCK]->(s:Stock_Node) WHERE a.uid = '{username}' AND s.symbol = '{stocksymbol}' AND t.buy = true RETURN SUM(t.price * t.quantity);".format(username=user, stocksymbol=symbol)
+			buy = db.cypher_query(neo4j_buy_query)
+			buy = buy[0][0][0]
+			neo4j_sell_query = "MATCH (a:User_Node)-[:PERFORMS]->(t:Transaction_Node)-[:TRANSACTIONTOSTOCK]->(s:Stock_Node) WHERE a.uid = '{username}' AND s.symbol = '{stocksymbol}' AND t.buy = false RETURN SUM(t.price * t.quantity);".format(username=user, stocksymbol=symbol)
+			sell = db.cypher_query(neo4j_sell_query)
+			sell = sell[0][0][0]
+			neo4j_potential_query = "MATCH (s:Stock_Node)<-[:OWNS]-(a:User_Node)-[:HASPORTFOLIO]->(p:Portfolio_Node) WHERE s.symbol = '{stocksymbol}' AND a.uid = '{username}' AND p.symbol = '{stocksymbol}' RETURN s.curr_price * p.quantity AS potential;".format(username=user, stocksymbol=symbol)
+			potential = db.cypher_query(neo4j_potential_query)
+			potential = potential[0][0][0]
+
+			port_node = Portfolio_Node.nodes.get(uid=user, symbol=symbol)
+			port_node.profit = (sell + potential)/buy
+			port_node.save()
+
+			neo4j_better_profit_query = "MATCH (p:Portfolio_Node)-[:CONTAINS]->(s:Stock_Node)<-[:CONTAINS]-(p1:Portfolio_Node) WHERE p.uid='{username}' AND p1.profit > p.profit AND s.symbol = '{stocksymbol}' RETURN p1.uid ORDER BY p1.profit DESC;".format(username=user, stocksymbol=symbol)
+			better_users = db.cypher_query(neo4j_better_profit_query)
+			print(better_users)
+			better_list = better_users[0]
+			for better in better_list:
+				uid = better[0]
+				neo4j_selldate_query = "MATCH (s:Stock_Node)<-[:TRANSACTIONTOSTOCK]-(ts:Transaction_Node)<-[:PERFORMS]-(betterTrader:User_Node) WHERE ts.buy = false AND s.symbol = '{stocksymbol}' AND betterTrader.uid='{username}' WITH max(ts.price) as maxsell MATCH (s:Stock_Node)<-[:TRANSACTIONTOSTOCK]-(ts:Transaction_Node)<-[:PERFORMS]-(betterTrader:User_Node) WHERE ts.price = maxsell AND ts.buy = false AND s.symbol = '{stocksymbol}' AND betterTrader.uid='{username}' RETURN ts.date, ts.tid".format(stocksymbol=symbol, username=uid)
+				selldate = db.cypher_query(neo4j_selldate_query)
+				neo4j_buydate_query = "MATCH (s:Stock_Node)<-[:TRANSACTIONTOSTOCK]-(ts:Transaction_Node)<-[:PERFORMS]-(betterTrader:User_Node) WHERE ts.buy = true AND s.symbol = '{stocksymbol}' AND betterTrader.uid='{username}' WITH min(ts.price) as minbuy MATCH (s:Stock_Node)<-[:TRANSACTIONTOSTOCK]-(ts:Transaction_Node)<-[:PERFORMS]-(betterTrader:User_Node) WHERE ts.price = minbuy AND ts.buy = true AND s.symbol = '{stocksymbol}' AND betterTrader.uid='{username}' RETURN ts.date, ts.tid".format(stocksymbol=symbol, username=uid)
+				buydate = db.cypher_query(neo4j_buydate_query)
+				print(uid)
+				print(selldate)
+				print(buydate)
+
 			url = self.request.get_full_path()
 			temp = url.split('?buysellvolume=')
 			context['volume'] = (temp[1])[: temp[1].find('&')]

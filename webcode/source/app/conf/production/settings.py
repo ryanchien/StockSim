@@ -1,6 +1,9 @@
 import os
 from os.path import dirname
 from django.utils.translation import ugettext_lazy as _
+from neomodel import config
+
+config.DATABASE_URL = 'bolt://test:test@localhost:7687'  # default
 
 BASE_DIR = dirname(dirname(dirname(dirname(os.path.abspath(__file__)))))
 CONTENT_DIR = os.path.join(BASE_DIR, 'content')
@@ -79,6 +82,15 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
+
+NEO4J_DATABASES = {
+    'default' : {
+        'HOST':'localhost',
+        'PORT':7474,
+        'ENDPOINT':'/db/data'
+    }
+}
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
