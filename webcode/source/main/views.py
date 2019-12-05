@@ -363,10 +363,10 @@ class IndexPageView(TemplateView, FormView):
 		stock_quantities_query = common.db_helper.db_query(stock_quant_sql, argsstocks)
 		stock_quantities = [(d['Symbol'], int(d['Quantity'])) for d in stock_quantities_query]
 		context['stock_quantity'] = stock_quantities
-		sql_open_orders = 'SELECT rowid, Symbol, Quantity, BuySell FROM TradingHistory WHERE User =? AND OpenOrder = 1'
+		sql_open_orders = 'SELECT rowid, Symbol,AskingPrice, Quantity, BuySell FROM TradingHistory WHERE User =? AND OpenOrder = 1'
 		args_open_orders = (user,)
 		open_orders_query = common.db_helper.db_query(sql_open_orders, args_open_orders)
-		open_orders = [(row['rowid'], row['Symbol'], int(row['Quantity']), row['BuySell']) for row in open_orders_query]
+		open_orders = [(row['rowid'], row['Symbol'],row['AskingPrice'] ,int(row['Quantity']), row['BuySell']) for row in open_orders_query]
 		print("OPEN ORDERS", open_orders)
 		context['open_orders'] = open_orders
 		context['user_capital'] = user_wallet

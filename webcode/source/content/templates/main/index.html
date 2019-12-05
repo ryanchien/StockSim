@@ -91,10 +91,10 @@ btn-group-xs > .btn, .btn-xs {
         </a>
       
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink"  >
-            <a class="dropdown-item" style = "font-weight: bold;"><p style = "display:inline; text-decoration:underline;">Stockname</p> <p style = "display:inline; text-decoration:underline;">Quantity</p> <p style = "display:inline; text-decoration:underline;">Type</p>    </a>
-            {% for rowid,Symbol,Quantity,BuySell in open_orders %}
+            <a class="dropdown-item" style = "font-weight: bold;"><p style = "display:inline; text-decoration:underline;">Stockname</p> <p style = "display:inline; text-decoration:underline;">Quantity</p> <p style = "display:inline; text-decoration:underline;">Price</p> <p style = "display:inline; text-decoration:underline;">Type</p>    </a>
+            {% for rowid,Symbol,AskingPrice,Quantity,BuySell in open_orders %}
             
-              <a class="dropdown-item"  style = "color:rgb(78, 109, 136); "  > <div style = "margin-right: 50px; display:inline-block"> {{Symbol}} </div> <div style = "margin-right: 50px; display:inline-block">{{Quantity}}&nbsp; &nbsp; &nbsp;  &nbsp;&nbsp; &nbsp; &nbsp;  
+              <a class="dropdown-item"  style = "color:rgb(78, 109, 136); " > <div style = "margin-right: 50px; display:inline-block"> {{Symbol}} </div> <div style = "margin-right: 50px; display:inline-block">{{Quantity}}</div><div style = "margin-right: 50px; display:inline-block">{{AskingPrice}}&nbsp; &nbsp; 
                 {% if  BuySell == 'B' %}
                  Buy
                 {% else %}
