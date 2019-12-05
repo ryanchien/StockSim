@@ -384,7 +384,7 @@ class IndexPageView(TemplateView, FormView):
 		user_wallet = 0
 		if record2:
 			user_wallet = record2[0]['Quantity']
-		context['user_capital'] = user_wallet
+		context['user_capital'] = round(user_wallet,2)
 
 		return context
 
