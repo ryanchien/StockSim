@@ -2,6 +2,9 @@ import os
 import warnings
 from django.utils.translation import ugettext_lazy as _
 from os.path import dirname
+from neomodel import config
+
+config.DATABASE_URL = 'bolt://neo4j:neo4j@localhost:7687'  # default
 
 warnings.simplefilter('error', DeprecationWarning)
 
@@ -74,6 +77,14 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
+}
+
+NEO4J_DATABASES = {
+    'default' : {
+        'HOST':'localhost',
+        'PORT':7474,
+        'ENDPOINT':'/db/data'
     }
 }
 

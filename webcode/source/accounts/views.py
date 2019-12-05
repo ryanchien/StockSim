@@ -19,7 +19,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import View, FormView
 from django.conf import settings
 import common.db_helper
-
+from common.neo4j import User_Node, Transaction_Node, Portfolio_Node, Stock_Node
 
 from .utils import (
     send_activation_email, send_reset_password_email, send_forgotten_username_email, send_activation_change_email,
@@ -30,6 +30,9 @@ from .forms import (
 )
 from .models import Activation
 
+from neomodel import config
+
+config.DATABASE_URL = 'bolt://test:test@localhost:7687'  # default
 
 class GuestOnlyView(View):
     def dispatch(self, request, *args, **kwargs):
@@ -107,6 +110,10 @@ class SignUpView(GuestOnlyView, FormView):
         sqlcall = 'INSERT INTO Portfolios VALUES (?,?,?)'
         args = (user.username, "USD", 10000)
         common.db_helper.db_execute(sqlcall, args)
+
+        user_node = User_Node(uid=user.username).save()
+        #port_node = Portfolio_Node(uid=user.username, profit=0.0).save()
+        #user_node.portfolio.connect(port_node)
 
         # Change the username to the "user_ID" form
         if settings.DISABLE_USERNAME:
