@@ -288,19 +288,34 @@ class IndexPageView(TemplateView, FormView):
 				common.db_helper.db_execute(sql5, args5)
 
 			#update neo4j portfolio profit
+			sell = 0.0
+			potential = 0.0
+			buy = 0.0
+			transaction_node_exists = True
 			neo4j_buy_query = "MATCH (a:User_Node)-[:PERFORMS]->(t:Transaction_Node)-[:TRANSACTIONTOSTOCK]->(s:Stock_Node) WHERE a.uid = '{username}' AND s.symbol = '{stocksymbol}' AND t.buy = true RETURN SUM(t.price * t.quantity);".format(username=user, stocksymbol=symbol)
 			buy = db.cypher_query(neo4j_buy_query)
-			buy = buy[0][0][0]
+			if (len(buy[0])==0):
+				transaction_node_exists = False
+			if (transaction_node_exists == True):
+				buy = buy[0][0][0]
 			neo4j_sell_query = "MATCH (a:User_Node)-[:PERFORMS]->(t:Transaction_Node)-[:TRANSACTIONTOSTOCK]->(s:Stock_Node) WHERE a.uid = '{username}' AND s.symbol = '{stocksymbol}' AND t.buy = false RETURN SUM(t.price * t.quantity);".format(username=user, stocksymbol=symbol)
 			sell = db.cypher_query(neo4j_sell_query)
-			sell = sell[0][0][0]
+			if (len(sell[0])==0):
+				transaction_node_exists = False
+			if (transaction_node_exists == True):
+				sell = sell[0][0][0]
 			neo4j_potential_query = "MATCH (s:Stock_Node)<-[:OWNS]-(a:User_Node)-[:HASPORTFOLIO]->(p:Portfolio_Node) WHERE s.symbol = '{stocksymbol}' AND a.uid = '{username}' AND p.symbol = '{stocksymbol}' RETURN s.curr_price * p.quantity AS potential;".format(username=user, stocksymbol=symbol)
 			potential = db.cypher_query(neo4j_potential_query)
-			potential = potential[0][0][0]
+			if (len(potential[0])==0):
+				transaction_node_exists = False
+			if (transaction_node_exists == True):
+				potential = potential[0][0][0]
 
-			port_node = Portfolio_Node.nodes.get(uid=user, symbol=symbol)
-			port_node.profit = (sell + potential)/buy
-			port_node.save()
+
+			if (transaction_node_exists == True):
+				port_node = Portfolio_Node.nodes.get(uid=user, symbol=symbol)
+				port_node.profit = (sell + potential)/buy
+				port_node.save()
 
 			neo4j_better_profit_query = "MATCH (p:Portfolio_Node)-[:CONTAINS]->(s:Stock_Node)<-[:CONTAINS]-(p1:Portfolio_Node) WHERE p.uid='{username}' AND p1.profit > p.profit AND s.symbol = '{stocksymbol}' RETURN p1.uid ORDER BY p1.profit DESC;".format(username=user, stocksymbol=symbol)
 			better_users = db.cypher_query(neo4j_better_profit_query)
