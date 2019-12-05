@@ -28,6 +28,8 @@ btn-group-xs > .btn, .btn-xs {
     </form>
   </div>
 </div>
+
+
   {% endif %}
   
   
@@ -275,7 +277,30 @@ btn-group-xs > .btn, .btn-xs {
 </div>
 {% endif %}
 <!-- TradingView Widget END -->
+<table class="table table-striped" style = "margin: auto;
+width: 50%">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">First</th>
+        <th scope="col">Last</th>
+        <th scope="col">Handle</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for id, uid, selldate, buydate in better_orders %}
+      <tr>
+        <th scope="row">id</th>
+        <td>uid</td>
+        <td>selldate</td>
+        <td>buydate</td>
+      </tr>
+      {% endfor %}
+    </tbody>
   </table>
 
-
 {% endblock %}
+
+
+
+

@@ -304,18 +304,22 @@ class IndexPageView(TemplateView, FormView):
 
 			neo4j_better_profit_query = "MATCH (p:Portfolio_Node)-[:CONTAINS]->(s:Stock_Node)<-[:CONTAINS]-(p1:Portfolio_Node) WHERE p.uid='{username}' AND p1.profit > p.profit AND s.symbol = '{stocksymbol}' RETURN p1.uid ORDER BY p1.profit DESC;".format(username=user, stocksymbol=symbol)
 			better_users = db.cypher_query(neo4j_better_profit_query)
-			print(better_users)
+			#print(better_users)
 			better_list = better_users[0]
+			tup_list = []
+			idx = 1
 			for better in better_list:
 				uid = better[0]
 				neo4j_selldate_query = "MATCH (s:Stock_Node)<-[:TRANSACTIONTOSTOCK]-(ts:Transaction_Node)<-[:PERFORMS]-(betterTrader:User_Node) WHERE ts.buy = false AND s.symbol = '{stocksymbol}' AND betterTrader.uid='{username}' WITH max(ts.price) as maxsell MATCH (s:Stock_Node)<-[:TRANSACTIONTOSTOCK]-(ts:Transaction_Node)<-[:PERFORMS]-(betterTrader:User_Node) WHERE ts.price = maxsell AND ts.buy = false AND s.symbol = '{stocksymbol}' AND betterTrader.uid='{username}' RETURN ts.date, ts.tid".format(stocksymbol=symbol, username=uid)
 				selldate = db.cypher_query(neo4j_selldate_query)
 				neo4j_buydate_query = "MATCH (s:Stock_Node)<-[:TRANSACTIONTOSTOCK]-(ts:Transaction_Node)<-[:PERFORMS]-(betterTrader:User_Node) WHERE ts.buy = true AND s.symbol = '{stocksymbol}' AND betterTrader.uid='{username}' WITH min(ts.price) as minbuy MATCH (s:Stock_Node)<-[:TRANSACTIONTOSTOCK]-(ts:Transaction_Node)<-[:PERFORMS]-(betterTrader:User_Node) WHERE ts.price = minbuy AND ts.buy = true AND s.symbol = '{stocksymbol}' AND betterTrader.uid='{username}' RETURN ts.date, ts.tid".format(stocksymbol=symbol, username=uid)
 				buydate = db.cypher_query(neo4j_buydate_query)
-				print(uid)
-				print(selldate)
-				print(buydate)
-
+				tup = (idx, uid, selldate[0][0][0], buydate[0][0][0])
+				idx+=1
+				tup_list.append(tup)
+				print("the list", tup_list)
+			
+			context['better_orders']
 			url = self.request.get_full_path()
 			temp = url.split('?buysellvolume=')
 			context['volume'] = (temp[1])[: temp[1].find('&')]
